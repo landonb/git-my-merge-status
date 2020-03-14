@@ -1,0 +1,28 @@
+# vim:tw=0:ts=2:sw=2:et:norl:ft=gitconfig
+
+# USAGE: You could copy the 'alias' section below to your
+#        own ~/.gitconfig, and then call, e.g., `git st`.
+#
+#        Or, you could copy this file somewhere
+#        and include it from ~/.gitconfig. E.g.,
+#
+#          $ cp .gitconfig.example /path/to/my-merge-status.gitconfig
+#          $ cat <<EOF >> ~/.gitconfig
+#          [include]
+#            path = /path/to/my-merge-status.gitconfig
+#          EOF
+
+[alias]
+
+  # Shows a fancy, very detailed one-line repository status.
+  st = my-merge-status
+
+  # Shows the same detailed one-liner, but formatted to align well when
+  # printed alongide other status lines.
+  # - This is mostly used for testing changes to the status line for when it's
+  #   used by the ohmyrepos 'mystatus' action (github.com:landonb/ohmyrepos).
+  #   E.g., to see status lines for each of your repos, you could run:
+  #     $ mr -d / mystatus
+  #   but to see a similar status for only the current repo, run this command.
+  stt = ! GITFLU_MYST_ALIGN_COLS=true git my-merge-status
+
