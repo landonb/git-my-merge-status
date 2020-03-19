@@ -110,7 +110,7 @@
 # - If you cannot name a branch specially and want to have it ignored by
 #   this script (i.e., so you aren't needled to merge changes to 'develop',
 #   because you checked out a pinned branch), you can added rules to the
-#   ignore file (defined by GITFLU_MYST_IGNORE_UP_BRANCH_RULES).
+#   ignore file (defined by GITFLU_MYST_NOCHORES_FILE).
 #
 # SYMBOLOGY:
 #
@@ -123,7 +123,7 @@
 #   [👊] active branch needs work: ahead of local ancestor, or has WIP or squash! commits;
 #    🙏  active branch is pristine: at same commit as ancenstor, and no WIP/squash commits.
 #    🍬  active branch is a TIP branch, deliberately ahead of progenitor and 'upstream'.
-#    🙈  chores are ignored per rule in GITFLU_MYST_IGNORE_UP_BRANCH_RULES (except tidiness).
+#    🙈  chores are ignored per rule in GITFLU_MYST_NOCHORES_FILE (except tidiness).
 # - [👆] active branch not pushed to 'origin' remote -- not shown for WIP branches.
 #    👍  active branch same commit as 'origin', e.g., refs/remotes/origin/<branch>.
 # - [⚡] active branch not pushed to 'upstream' remote -- not shown for WIP or TIP branches.
@@ -248,8 +248,8 @@
 #     behind) the progenitor branch.
 #     - If you want to tell my-merge-status to not check progenitor tidiness
 #       on a repository, add the path to the repository to the file indicated
-#       by GITFLU_MYST_IGNORE_UP_BRANCH_RULES (which is expected to be found
-#       on PATH and defaults to 'my-merge-status-no-local-chore').
+#       by GITFLU_MYST_NOCHORES_FILE (which is expected to be found
+#       on PATH and defaults to '.my-merge-status-nochores').
 #
 # PUBLIC REMOTE DEFAULT BRANCHES:
 #
@@ -335,7 +335,10 @@ my_merge_status_config () {
   GITFLU_MYST_WIP_COMMIT_FOUND="${GITFLU_MYST_WIP_COMMIT_FOUND:-🏭}"
   [ -z ${GITFLU_MYST_WIP_REMINDER+x} ] && \
     GITFLU_MYST_WIP_REMINDER="$(fg_tan)$(attr_emphasis)† WIP"
-  GITFLU_MYST_IGNORE_UP_BRANCH_RULES="${GITFLU_MYST_IGNORE_UP_BRANCH_RULES:-my-merge-status-no-local-chore}"
+  # File with paths of repos whose up-branch tidiness to ignore,
+  # e.g., if you checked out a release branch, say, 'release-1.0',
+  # tell MYST to not worry about relationship to 'develop' branch.
+  GITFLU_MYST_NOCHORES_FILE="${GITFLU_MYST_NOCHORES_FILE:-.my-merge-status-nochores}"
 
   GITFLU_MYST_TIP_BRANCH_REGEX="${GITFLU_MYST_TIP_BRANCH_REGEX:-^tip/}"
   # NOTE: The kangaroo eats up an addition column, not sure why, so appending space.
@@ -529,8 +532,8 @@ branch_ancestor () {
 # branch and do not care that it's not synced with, say, 'master').
 no_up_branch_chores () {
   local project_root="$(git rev-parse --show-toplevel)"
-  local exclude_file="$(dirname ${BASH_SOURCE})/${GITFLU_MYST_IGNORE_UP_BRANCH_RULES}"
-  [ ! -e ${exclude_file} ] && return 1
+  local exclude_file="$(command -v "${GITFLU_MYST_NOCHORES_FILE}")"
+  ( [ -z "${exclude_file}" ] || [ ! -s ${exclude_file} ] ) && return 1
   local line
   while IFS= read -r line; do
     # Skip comment lines (completely unnecessary because strict regex later).
