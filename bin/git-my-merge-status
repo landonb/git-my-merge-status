@@ -1,0 +1,1180 @@
+#!/bin/bash
+#  vim:tw=0:ts=2:sw=2:et:norl:ft=bash
+
+# ***
+
+# USAGE: Run directly, or put on PATH and wire as alias.
+#
+#        - E.g., to set a git alias
+#
+#           $ git config --global alias.st '! git-my-merge-status'
+#
+#        - E.g., to set a Bash alias:
+#
+#           $ alias gs="git-my-merge-status"
+
+# YOU: Run as-is, or customize to you liking via environs,
+#      or by copy-pasting `my_merge_status_config`, below, to
+#      your own wrapper script.
+
+# DEPENDENCIES: None, but some optional.
+#
+# - If you'd like to see how old version tags are, you'll need a python
+#   package published by the same author who wrote this script:
+#
+#     pip3 install human-friendly_pedantic-timedelta
+
+# ***
+
+# [HOLD ON, THIS'LL TAKE SOME EXPLAINING.]
+
+# BASIC IDEA:
+#
+# Think of git-my-merge-status as `git status --porcelain` on steroids.
+#
+# CONCEPTS:
+#
+# In addition to letting you know if there's work to do in the working
+# tree, my-merge-status indicates if there's *workflow*-related work to
+# do, such as needing to pull changes from a remote, or needing to merge
+# a feature branch up to a 'develop' or 'master' branch.
+#
+# For this discussion to make sense, and to not confuse you, dear reader,
+# I avoid the term "upstream".
+#
+# - In a general sense, "upstream" can mean any remote where you push
+#   changes. For instance, my GitHub repository is "upstream" of the
+#   local working tree on my laptop.
+#
+#   But in a more specific sense, "upstream" is often meant to refer to
+#   the main project repository, i.e., the URL of the project which maybe
+#   you forked is called the 'upstream' remote in many online examples.
+#   (But unlike 'origin', which Git uses by default when you clone a repo,
+#   I'm not aware that 'upstream' is codified anywhere; it's just part of
+#   the vernacular.)
+#
+# So for this discussion, keep the concept of an "upstream" in mind, but
+# consider that I'll use these two terms to clarify what's being discussed:
+#
+# - Progenitor: I use the term *progenitor*, defined as "an ancestor or parent",
+#   to refer to the branch upstream (see?) of the current branch, where the user
+#   is likely to want to merge changes.
+#
+#   For instance, when I'm finished with a feature branch, I'll merge it to
+#   the 'develop' branch. And every so often, I'll merge 'develop' to the
+#   'master' branch.
+#
+#   In this example, the feature branch's progenitor is 'develop', and the
+#   'develop' branch's progenitor is 'master'.
+#
+#   This is a pretty obvious workflow to most people, but I'm not sure this
+#   particular relationship between branches has been given a clarifying name
+#   before. (That is, I've called it the *upstream branch* in the past, but
+#   one might confuse that with the branch on the 'upstream' remote!)
+#
+#   - You might envision the progenitor branch hierarchy as
+#     'master' <- 'develop' <- feature branches.
+#
+# - Remote Branch: The meaning of *remote branch* should be obvious, but I
+#   wanted to highlight that rather than say "upstream branch", I'll say
+#   "remote branch" to refer to the same-named branch on a remote repo.
+#
+#   - You might envision the remote branch hierarchy as
+#     'upstream' <- 'origin' <- local repo.
+#
+# WORKFLOW:
+#
+# Your basic Forking Workflow, but with some specially-named branches
+# for additional functionality I've found useful.
+#
+# Remotes:
+# - If you've forked or cloned someone else's project, assign that URL
+#   to the 'upstream' remote.
+# - If you've forked a project, or if it's your personal project,
+#   assign that URL to the 'origin' remote.
+#   - If you didn't fork the project and it's not yours, do not use
+#     a remote named 'origin'.
+# - All other remotes are ignored.
+#
+# Branches:
+# - Work flows from feature branches (named whatever you want) to the
+#   'develop' branch, and from 'develop' to 'master'.
+# - Use alpha or WIP (work in progress) branch naming to indicate that
+#   a branch is not meant to be pushed to the remotes. The regex for
+#   alpha/WIP branches is user-configurable but defaults to the prefixes "wip/"
+#   and "a[0-9][0-9]/", e.g., "wip/testing-some-hack", or "a01/2020-03-13".
+# - Use TIP (off the tip) branch naming to indicate that a branch is
+#   allowed to be ahead of the remote branch (which is useful if you're
+#   hacking on a fork but don't want to submit a pull request yet).
+#   A TIP branch starts with the prefix "tip/".
+# - If you cannot name a branch specially and want to have it ignored by
+#   this script (i.e., so you aren't needled to merge changes to 'develop',
+#   because you checked out a pinned branch), you can added rules to the
+#   ignore file (defined by GITFLU_MYST_IGNORE_UP_BRANCH_RULES).
+#
+# SYMBOLOGY:
+#
+# Here are the default icons and their significance,
+#  where [symbol] means it's an alert, shown in red:
+#
+# -  🚽  a "private" repository, i.e., there's no remote with .com|.org|.etc.
+#    🎁  a public repository, i.e., there's at least one .com|.org|.etc remote.
+# - [👇] active branch is not tidy: has working tree changes, or untracked files.
+#   [👊] active branch needs work: ahead of local ancestor, or has WIP or squash! commits;
+#    🙏  active branch is pristine: at same commit as ancenstor, and no WIP/squash commits.
+#    🍬  active branch is a TIP branch, deliberately ahead of progenitor and 'upstream'.
+#    🙈  chores are ignored per rule in GITFLU_MYST_IGNORE_UP_BRANCH_RULES (except tidiness).
+# - [👆] active branch not pushed to 'origin' remote -- not shown for WIP branches.
+#    👍  active branch same commit as 'origin', e.g., refs/remotes/origin/<branch>.
+# - [⚡] active branch not pushed to 'upstream' remote -- not shown for WIP or TIP branches.
+#    🌩  active branch same commit as 'upstream', e.g., refs/remotes/upstream/<branch>.
+# -  ⛵  remote branch is ahead of local branch; user may want to fetch/pull changes.
+#    🤷  for WIP branch, printed for each remote, because not expecting user to push.
+#    ❗  for WIP, printed if the branch exists on the remote, which is unexpected.
+#    🦘  for TIP branch, means there's no remote branch of same name (which is fine).
+#    ❓  for TIP branch, means the remote branch exists, which would be strange.
+# -  🏭  a WIP or "squash!" commit found between HEAD and the latest progenitor commit
+# -  🌈  the all-good indicator: shown if active branch needs no work and is pushed.
+#   [☻]  shaded to indicate what chores to do:
+#        - Green: No chores. Working tree tidy, and progenitor and remote branches okay.
+#        - Blue: User should merge the branch to progenitor or push to remote.
+#        - Yellow: User needs to fetch changes from progenitor branch or remote.
+#        - Red: Local repo is untidy; user must commit changes, add untracked, etc.
+# -  🏷  if version tag found, shows how old it is (release early, release often!).
+#    ☆   if no version tag, shows the age of the branch, since the first commit.
+#
+# CONVENTIONS:
+#
+# TYPES OF BRANCHES (AND HOW THEY'RE NAMED):
+#
+# All branches are optional, but each project might have any of the following:
+# - A 'master' branch, which merges to no branch.
+# - A 'develop' branch, which merges to 'master'.
+# - Zero or more work-in-progress branches, aka WIP branches,
+#   which eventually merge to 'develop' (if it exists) or 'master',
+#   but probably after being rebased.
+#   - A WIP branch is named with a prefix followed by the date.
+#     The prefix is either 'wip/' or the letter 'a' (as in 'alpha')
+#     followed by (generally) a 2-digit number you can increment. E.g.,
+#     'wip/2020-03-10', or 'a01/2020-03-10' or 'a02/2020-03-10', etc.
+#   - A WIP branch is generally not shared with other developers.
+#     - I use WIP when I'm hacking on something that I plan to rebase
+#       completely later (and then I'll either merge to, say, 'develop',
+#       and push that to the remote, or I'll create a properly-named
+#       branch and push that).
+#     - The WIP branch naming convention could be used to tell other
+#       developers not to take such a branch too seriously. But really
+#       you should not push a WIP branch to a shared remote (like GitHub)
+#       -- it feels like dirty underwear to me, so I like to keep it secret
+#       -- so the my-merge-status tool will not check that a WIP branch has
+#       been pushed to the 'origin' remote, like it does for other branches.
+#       - If you are worried about backing up your work because you are
+#         not pushing WIP branches to GitHub, consider using myrepos to
+#         sync your work to a USB device or to another host when you want.
+#     - In addition to using WIP branches for privately hacking without
+#       judgement by others, I have a ``git wip`` alias that's useful
+#       when I get interrupted and I want to capture my work -- it commits
+#       all changes and any files. Later, I'll ``git rollback``, clean up
+#       my work, and then make different commits. (For example, if I need
+#       to physically leave my place and I've been working on my desktop
+#       machine, I'll quickly git-wip my work, sync all my repos to a laptop,
+#       and then I'm good to go -- I can rollback on the laptop and continue
+#       working.)
+#     - Considering how WIP branches are used privately, another reason not
+#       to push a WIP branch to a public remote, such as GitHub, is because
+#       you want to be able to rebase the branch, and you don't want to have
+#       to force-push or worry about other developers working off your WIP.
+#       - However, you might otherwise push a WIP branch, such that you won't
+#         be able to rebase it without creating conflicts. For instance, I
+#         use myrepos to backup locally, either to a USB thumb drive, or to
+#         another host. Once I've backed up a WIP branch, I won't be able
+#         to rebase it and back it up again without fiddling with the backup
+#         repository. Ick. In cases such as this, I like to use the incremental
+#         numbering strategy, mentioned earlier. For example, suppose I create
+#         a WIP branch named "a01/2020-03-10", and that I push that branch to
+#         backup media. Later, when I want to rebase that branch, to avoid a
+#         conflict with the backup repo, I'll bump the alpha number and make a
+#         new branch, e.g., "a02/2020-03-10".
+# - Zero or more so-called "tipped", aka TIP, branches (where *tip* means
+#   "attach to or cover the end or extremity of", as in, "mountains tipped
+#   with snow"), which are used to fork-and-extend repositories where you
+#   do not plan to submit changes upstream (e.g., you want to add an .ignore
+#   to a project, but you do nt want to bother asking project maintainers to
+#   add one).
+#   - Use the same naming convention as WIP branches, but the date should
+#     reflect the date of the latest upstream commit that your work descends
+#     from. I also like to add the eight-digit hash.
+#     - For instance, if I forked a project whose last commit was 2019-08-14,
+#       and whose hash is abcd1234, I'll create a branch named
+#       "tip/2019-08-14-abcd1234" (and my-merge-status will show the
+#       abbreviated form, "tip/2019-08-14", when reporting on multiple repos).
+# - Zero or more so-called "feature" branches.
+#   - A feature branch is conceptually the same as those defined in Gitflow.
+#     These are branches you plan to share with others. You probably will not
+#     want to rebase a feature branch (though you could always make a new
+#     branch similarly named, but with a number incremented, or a different
+#     date).
+#   - Because feature branches are meant to be shared, my-merge-status will
+#     notify you if the latest local feature branch commit has not been pushed
+#     to the remote (e.g., if you have not yet pushed the latest commits to
+#     'origin').
+#   - my-merge-status will also notify you if the feature branch has not
+#     yet been merged to the *progenitor* branch (which is the 'develop'
+#     branch if it exists, or 'master' (or however GITFLU_MYST_BRANCH_HIERARCHY
+#     is configured)).
+#   - So that a multiple-project my-merge-status shows the most relevant branch
+#     name snippet (because the branch name space is limited), use the same
+#     naming convention as used for WIP and TIP branches.
+#     - In the feature branch name, include a 3-character prefix, followed by
+#       a path separator, and then a 10-character date (YYYY-MM-DD), which can
+#       be followed by anything except another path separator.
+#       - For instance, here's how my-merge-status formats the following:
+#           features/FOO-123/2020-03-10-drink-fizz-buzz → 123/2020-03-10
+#           features/BAR-456/2020-03-10-add-magic-sauce → 456/2020-03-10
+#         If you want to rebase your work but already shared the branch,
+#         you could create a new branch using an incrementing number, and
+#         the my-merge-status-reported branch name will remain the same, e.g.,
+#           features/FOO-123/2020-03-10-drink-fizz-buzz-01 → 123/2020-03-10
+#           features/FOO-123/2020-03-10-drink-fizz-buzz-02 → 123/2020-03-10
+#       - (lb): I realize the three-character prefix might be limiting,
+#         but I like it for its brevity. Consider setting the environment
+#         variable, GITFLU_MYST_BR_PART_PENULTIMATE_W, if you'd like to
+#         specify a different width.
+# - Zero or more other branches, not named like or adhering to any previously
+#   mentioned branch type.
+#   - By default, my-merge-status assumes you'll want to eventually merge
+#     these branches to 'develop' or 'master' (i.e., the *progenitor* branch).
+#     So my-merge-status will alert you when these branches are ahead of (or
+#     behind) the progenitor branch.
+#     - If you want to tell my-merge-status to not check progenitor tidiness
+#       on a repository, add the path to the repository to the file indicated
+#       by GITFLU_MYST_IGNORE_UP_BRANCH_RULES (which is expected to be found
+#       on PATH and defaults to 'my-merge-status-no-local-chore').
+#
+# PUBLIC REMOTE DEFAULT BRANCHES:
+#
+# Consider setting the default branch on GitHub to help other users interpret
+# your work.
+# - The default branch on GitHub should be 'develop' if such a branch exists.
+# - If you're not using a 'develop' branch, stick with 'master' as the default.
+# - But if the project is tipped, delete the 'master' branch both locally and
+#   from the 'origin' remote, and set the GitHub default branch to the tipped
+#   branch. This should give visitors to your GitHub page a better understanding
+#   how you're using the forked project.
+#   - Note that occasionally you'll want to fetch changes from the 'upstream'
+#     remote. When changes are found, create a new TIP branch named as indicated
+#     previously, rebase your work, push to the 'origin' remote, and then log on
+#     GitHub and update the default branch. (Perhaps someday I'll automate this
+#     step using a GitHub CLI tool.)
+#
+# REMOTE REPOSITORY CONVENTIONS:
+#
+# As you have probably figured out by now, there are two remote repositories,
+# 'origin' and 'upstream'.
+# - Neither remote exists for private repositories.
+# - If you've forked a project, the 'origin' remote refers to your GitHub
+#   user's repository, and the 'upstream' remote refers to the repository
+#   that was forked. (This is pretty standard fare for most Git users.)
+# - If you've cloned a project without forking it, the 'origin' remote
+#   most likely refers to the repository that you cloned (because that's
+#   what git-clone does by default). But you're free to use the 'upstream'
+#   remote, if you want (I don't bother).
+# - Name any other remotes as you see fit.
+#   - my-merge-status only makes assumptions about the 'origin' and 'upstream'
+#     remotes, and it ignores all other remotes.
+#
+# OTHER CONVENTIONS:
+#
+# To correctly identify private vs. public repos, my-merge-status looks
+# for a .com, .org, or .edu in any remote name; or if a repo starts with "git@"
+# which works for a default SSH URL, e.g., "git@github.com:landonb/git-my-merge-status",
+# and also if you use the name of a Host from you ~/.ssh/config file.
+
+# ***
+
+# YOU: All customizable features are in this function.
+# - See README for copy-paste code to setup a wrapper script for your user.
+my_merge_status_config () {
+
+  # *** Workflow 'names' and any name-specific icons.
+
+  # Progenitor branches, e.g., check HEAD against 'develop' if feature
+  # branch, 'develop' against 'master', and 'master' has no progenitor.
+  GITFLU_MYST_BRANCH_HIERARCHY="${GITFLU_MYST_BRANCH_HIERARCHY:-master develop}"
+
+  # - Each remote has three parts (so the array size is a multiple of 3):
+  #   The first part is the remote name, followed by the icon used when the
+  #   remote branch is up to date, then what icon to use if user should push.
+  #   - E.g., "Hooray! 👍 The local and remote branch are at the same commit!",
+  #     versus, "Hey, pal, you got work to do! Push your code 👆 up to the remote!"
+  #   - The cloud and thunderbolt icon pairing is not as obvi. I associate cloud
+  #     with community, i.e., the community that uses and works from the main
+  #     source repository; and I guess the lighting bolt means you need to send
+  #     a shock -- your bits! -- upstream to the organization repo.
+  GITFLU_MYST_REMOTE_HIERARCHY="${GITFLU_MYST_REMOTE_HIERARCHY:-origin 👍 👆 upstream 🌟 ⚡}"
+
+  # *** Other icons and config.
+
+  GITFLU_MYST_HAS_PUBLIC_REMOTE="${GITFLU_MYST_HAS_PUBLIC_REMOTE:-🎁}"
+  GITFLU_MYST_ALL_REMOTES_PRIVY="${GITFLU_MYST_ALL_REMOTES_PRIVY:-🚽}"
+  GITFLU_MYST_LOOKS_PUBLIC_REGEX="${GITFLU_MYST_LOOKS_PUBLIC_REGEX:-^(ssh://git@|git@|https://)}"
+
+  GITFLU_MYST_LOCAL_REPO_AGREE="${GITFLU_MYST_LOCAL_REPO_AGREE:-🙏}"
+  GITFLU_MYST_LOCAL_REPO_AHEAD="${GITFLU_MYST_LOCAL_REPO_AHEAD:-👊}"
+  GITFLU_MYST_LOCAL_REPO_MESSY="${GITFLU_MYST_LOCAL_REPO_MESSY:-👇}"
+  GITFLU_MYST_LOCAL_REPO_NOCHR="${GITFLU_MYST_LOCAL_REPO_NOCHR:-🙈}"
+  GITFLU_MYST_LOCAL_REPO_TIPBR="${GITFLU_MYST_LOCAL_REPO_TIPBR:-🍬}"
+
+  GITFLU_MYST_PROGENITOR_AHEAD="${GITFLU_MYST_PROGENITOR_AHEAD:-⛵}"
+
+  GITFLU_MYST_WIP_BRANCH_REGEX="${GITFLU_MYST_WIP_BRANCH_REGEX:-^alpha-.*,^wip/.*,^a[0-9]\\\+/.*}"
+  # 'WIP' is my own convention. 'squash!' is from calls to `git commit --squash=<commit>`.
+  GITFLU_MYST_WIP_COMMIT_REGEX="${GITFLU_MYST_WIP_COMMIT_REGEX:-^WIP(:|$),^squash!}"
+  GITFLU_MYST_WIP_REMOTE_ABSENT="${GITFLU_MYST_WIP_REMOTE_ABSENT:-🤷}"
+  GITFLU_MYST_WIP_REMOTE_EXISTS="${GITFLU_MYST_WIP_REMOTE_EXISTS:-❗}"
+  GITFLU_MYST_WIP_COMMIT_FOUND="${GITFLU_MYST_WIP_COMMIT_FOUND:-🏭}"
+  [ -z ${GITFLU_MYST_WIP_REMINDER+x} ] && \
+    GITFLU_MYST_WIP_REMINDER="$(fg_tan)$(attr_emphasis)† WIP"
+  GITFLU_MYST_IGNORE_UP_BRANCH_RULES="${GITFLU_MYST_IGNORE_UP_BRANCH_RULES:-my-merge-status-no-local-chore}"
+
+  GITFLU_MYST_TIP_BRANCH_REGEX="${GITFLU_MYST_TIP_BRANCH_REGEX:-^tip/}"
+  # NOTE: The kangaroo eats up an addition column, not sure why, so appending space.
+  GITFLU_MYST_TIP_UPSTREAM_ABSENT="${GITFLU_MYST_TIP_UPSTREAM_ABSENT:-🦘 }"
+  GITFLU_MYST_TIP_UPSTREAM_EXISTS="${GITFLU_MYST_TIP_UPSTREAM_EXISTS:-❓}"
+
+  GITFLU_MYST_ICON_ACHIEVEMENT="${GITFLU_MYST_ICON_ACHIEVEMENT:-🌈 }"
+  GITFLU_MYST_ICON_TEMPERATURE="${GITFLU_MYST_ICON_TEMPERATURE:-☻}"
+
+  # ∙: digraph `Sb`, Bullet Operator.
+  GITFLU_MYST_SEP="${GITFLU_MYST_SEP:-∙}"
+  GITFLU_MYST_TRIPLE_SEP="$(printf "${GITFLU_MYST_SEP}%.0s" {1..3})"
+  GITFLU_MYST_SEPARATE_REMOTES="${GITFLU_MYST_SEPARATE_REMOTES:-}"
+  # OPTIONAL: If you want to visually separate each of the remote icons, try, e.g.,:
+  #   GITFLU_MYST_SEPARATE_REMOTES="${GITFLU_MYST_SEPARATE_REMOTES:- ${GITFLU_MYST_SEP} }"
+
+  GITFLU_MYST_HIDE_AGE=${GITFLU_MYST_HIDE_AGE:-false}
+  ! python_get_distribution "human-friendly_pedantic-timedelta" &> /dev/null && \
+    GITFLU_MYST_HIDE_AGE=true
+  # SYNC_ME: If you edit GITFLU_MYST_SINCE_VERSION_TAG, see `minwidth_fancy`, below.
+  GITFLU_MYST_SINCE_VERSION_TAG="${GITFLU_MYST_SINCE_VERSION_TAG:-🏷}"
+  # Pneumonic: A ☆ is born! The branch age, since the first commit.
+  GITFLU_MYST_SINCE_INIT_COMMIT="${GITFLU_MYST_SINCE_INIT_COMMIT:-☆}"
+
+  # landonb/ohmyrepos alignment (set true when running git-my-merge-status
+  # against 100s of repos, so that columns align nicely).
+  GITFLU_MYST_ALIGN_COLS=${GITFLU_MYST_ALIGN_COLS:-false}
+  if ${GITFLU_MYST_ALIGN_COLS}; then
+    GITFLU_MYST_ALIGN_NO_MERIT_FILLER="${GITFLU_MYST_ALIGN_NO_MERIT_FILLER:-   }"
+  fi
+  # The width of the second-to-last branch name (path) is 3 characters,
+  # i.e., enough to fit a 'tip/' or 'wip/', or even an alpha-numbered
+  # branch, e.g., 'a01/2020-03-10-new-idea', 'a02/2020-03-10', etc.
+  GITFLU_MYST_BR_PART_PENULTIMATE_W=${GITFLU_MYST_BR_PART_PENULTIMATE_W:-3}
+  # The width of the final branch name (path) part is 10 characters,
+  # i.e., to fit a YYYY-MM-DD string.
+  GITFLU_MYST_BR_PART_TERMINATING_W=${GITFLU_MYST_BR_PART_TERMINATING_W:-10}
+}
+
+# ***
+
+python_get_distribution () {
+  local pkgname="$1"
+  /usr/bin/env python -c \
+    "from pkg_resources import get_distribution; \
+     print(get_distribution('${pkgname}').version);"
+}
+
+# ***
+
+attr_emphasis () {
+  echo "\e[3m"
+}
+
+attr_reset () {
+  echo "\033[0m";
+}
+
+bg_red () {
+  echo "\033[41m"
+}
+
+fg_green () {
+  echo "\033[32m"
+}
+
+fg_lightblue () {
+  echo "\033[94m"
+}
+
+fg_lightgray () {
+  echo "\033[37m"
+}
+
+fg_lightgreen () {
+  echo "\033[92m"
+}
+
+fg_lightyellow () {
+  echo "\033[93m"
+}
+
+fg_red () {
+  echo "\033[91m"
+}
+
+fg_tan () {
+  echo "\033[38;2;215;175;95m"
+}
+
+# ***
+
+git_branch_name () {
+  local project_root="$(git rev-parse --show-toplevel)"
+  # Note that $(git rev-parse HEAD) returns the hash, not the name,
+  # so we add the option, --abbrev-ref.
+  # - But first! check there's actually a branch, i.e., if `git init`
+  #   but no `git commit`, rev-parse prints error.
+  # - Note that `test ""` returns false; `test "foo"` returns true.
+  if [ ! "$(command ls -A "${project_root}/.git/refs/heads")" ]; then
+    echo "<?!>"
+    return
+  fi
+  local branch_name=$(git rev-parse --abbrev-ref HEAD)
+  echo "${branch_name}"
+}
+
+branch_exists () {
+  local branch_name="${1:-${GITFLU_MYST_AT_BRANCH}}"
+  git show-ref --verify --quiet refs/heads/${branch_name}
+}
+
+remote_exists () {
+  local remote="$1"
+  git remote get-url ${remote} &> /dev/null
+}
+
+remote_branch_exists () {
+  local remote="$1"
+  local branch="$2"
+  git show-branch remotes/${remote}/${branch} &> /dev/null
+}
+
+# ***
+
+git_remote_looks_private () {
+  local remote="$1"
+  local remurl
+  remurl="$(git remote get-url ${remote} 2> /dev/null)" || return 1
+  ! $( echo "${remurl}" | grep -E "${GITFLU_MYST_LOOKS_PUBLIC_REGEX}" > /dev/null )
+}
+
+git_remotes_all_private () {
+  local remote
+  for remote in $(git remote); do
+    ! git_remote_looks_private "${remote}" && return 1
+  done
+  return 0
+}
+
+# ***
+
+# A "tipped" branch, or "tip" branch is the branch of a forked repo
+# whose local changes have not made it upstream (yet) -- so you have
+# to pull upstream changes and rebase local modifications on top, and
+# thereby your local branch will *always* be ahead of upstream/master.
+branch_tipped () {
+  local branch="$1"
+  local tip_regex
+  IFS=',' read -a tip_regex <<< "${GITFLU_MYST_TIP_BRANCH_REGEX}"
+  local regex=''
+  for regex in "${tip_regex[@]}"; do
+    [[ ${branch} =~ ${regex} ]] && return 0
+  done
+  return 1
+}
+
+branch_is_local_alpha_or_wip () {
+  local at_branch="${1:-${GITFLU_MYST_AT_BRANCH}}"
+
+  [ -z "${GITFLU_MYST_WIP_BRANCH_REGEX}" ] && return 1
+
+  local wip_greps
+  IFS=',' read -a wip_greps <<< "${GITFLU_MYST_WIP_BRANCH_REGEX}"
+  local grepclause
+  for grepclause in "${wip_greps[@]}"; do
+    ( echo "${at_branch}" | grep -e "${grepclause}" > /dev/null) && return 0
+  done
+
+  return 1
+}
+
+# ***
+
+branch_ancestor () {
+  local at_branch="${1:-${GITFLU_MYST_AT_BRANCH}}"
+  local up_branch=''
+  local it_branch
+  for it_branch in ${GITFLU_MYST_BRANCH_HIERARCHY}; do
+    [ "${at_branch}" = "${it_branch}" ] && break
+    up_branch="${it_branch}"
+  done
+  # By workflow convention, current branch will eventually
+  # make its way → ${up_branch}.
+  echo "${up_branch}"
+}
+
+# Ignore those repos that you do not control or for which you're
+# deliberate tracking a branch that is meant to be divergent from
+# the local upstream branch (e.g., you've pinned a repo to release
+# branch and do not care that it's not synced with, say, 'master').
+no_up_branch_chores () {
+  local project_root="$(git rev-parse --show-toplevel)"
+  local exclude_file="$(dirname ${BASH_SOURCE})/${GITFLU_MYST_IGNORE_UP_BRANCH_RULES}"
+  [ ! -e ${exclude_file} ] && return 1
+  local line
+  while IFS= read -r line; do
+    # Skip comment lines (completely unnecessary because strict regex later).
+    [[ "${line}" =~ ^[[:space:]]*# ]] && continue
+    # Look for match (the strict regex that is later).
+    [[ "${line}" = "${project_root}" ]] && return 0
+  done < "${exclude_file}"
+  return 1
+}
+
+warn_up_not_ancestor () {
+  local up_branch="$1"
+  [ -z "${up_branch}" ] && return
+
+  # Only warn if a conventional branch, i.e., not a feature or WIP
+  # branch, or something private where we don't care if user rebases.
+  local it_matters=false
+  local at_branch="${GITFLU_MYST_AT_BRANCH}"
+  local it_branch
+  for it_branch in ${GITFLU_MYST_BRANCH_HIERARCHY}; do
+    [ "${at_branch}" = "${it_branch}" ] && it_matters=true && break
+  done
+  ! ${it_matters} && return
+
+  if ! git show-branch ${up_branch} &> /dev/null; then
+    >&2 echo -e "$(bg_red)WARNING: Oh gee! No progenitor at ${up_branch}!$(attr_reset)"
+  elif ! git merge-base --is-ancestor ${up_branch} HEAD 2> /dev/null; then
+    # This could mean user rebased past ${up_branch}'s HEAD, which
+    # would mean needing to writing an upstream branch's history to
+    # commit changes. Which would probably be bad.
+    >&2 echo -e "$(bg_red)WARNING: Whoops! History unrelated to ${up_branch}!$(attr_reset)"
+  fi
+}
+
+# ***
+
+git_last_version_tag_describe () {
+  # By default, git-describe returns a commit-ish object representing the same
+  # commit as the referenced commit (which defaults to HEAD). The described name
+  # is the tag name, followed by the number of commits between it and the commit
+  # referenced, and finally suffixed with a 'g' and part of the referenced SHA.
+  # E.g., `git describe --tags --long --match '[v0-9][0-9.]*'` might return:
+  #       "0.12.0-828-g0266e06".
+  # So specify an --abbrev=0 to "suppress long format, only showing the closest tag."
+  # And note that I don't see a difference with --long or not. Not sure why I added.
+  # But it cannot be used with --abbrev=0. So easy to decide what to do. Not use it.
+  git describe --tags --abbrev=0 --match '[v0-9][0-9.]*' 2> /dev/null
+}
+
+git_last_version_tag_describe_safe () {
+  git_last_version_tag_describe || echo '0.0.0-✗-g0000000'
+}
+
+GITFLU_RE_LONG_TAG_PARTS='([^-]+)-([^-]+)-(.*)'
+
+git_last_version_name () {
+  local described="$(git_last_version_tag_describe_safe)"
+  echo ${described} | /bin/sed -E "s/${GITFLU_RE_LONG_TAG_PARTS}/\1/g"
+}
+
+git_last_version_dist () {
+  local described="$(git_last_version_tag_describe_safe)"
+  echo ${described} | /bin/sed -E "s/${GITFLU_RE_LONG_TAG_PARTS}/\2/g"
+}
+
+git_last_version_absent () {
+  local distance="$(git_last_version_dist)"
+  [ "${distance}" = '✗' ]
+}
+
+git_last_version_epoch_ts () {
+  # Note that the "described" tag output (e.g., 0.12.0-828-g0266e06) is a
+  # valid revision (per `man 7 gitrevisions`), which can be fed to git-log.
+  # - And to compute a time delta from then to now, get seconds since epoch:
+  #   git help log:
+  #     %at: author date, UNIX timestamp
+  git --no-pager \
+    log -1 \
+    --format=%at \
+    "$(git_last_version_tag_describe_safe)" \
+    2> /dev/null
+}
+
+git_since_init_epoch_ts () {
+  # Note that the "described" tag output (e.g., 0.12.0-828-g0266e06) is a
+  # valid revision (per `man 7 gitrevisions`), which can be fed to git-log.
+  # - And to compute a time delta from then to now, get seconds since epoch:
+  #   git help log:
+  #     %at: author date, UNIX timestamp
+  # NOTE: rev-list outputs in reverse chronological order, so oldest commit
+  #       is last; use tail to grab it.
+  git --no-pager \
+    log -1 \
+    --format=%at \
+    "$(git rev-list --max-parents=0 HEAD | tail -1)" \
+    2> /dev/null
+}
+
+python_prettify_elapsed () {
+  local seconds="${1:-0}"
+  # This spits to stderr if user does not have package installed.
+  /usr/bin/env python -c \
+    "from pedantic_timedelta import PedanticTimedelta; \
+     pdtd = PedanticTimedelta(seconds=${seconds}); \
+     print(pdtd.time_format_scaled(field_width=4, precision=1, abbreviate=4)[0]);" \
+     2> /dev/null
+}
+
+git_last_version_age () {
+  ${GITFLU_MYST_HIDE_AGE} && echo ' ' && return 0
+  # If not tagged, return whitespace padding, so final "WIP" column aligns.
+  # - The hardcoded width here accounts for the leading 2 spaces in the final
+  #   echo of this function, 1 space for the tag emoji (which, CAVEAT, means
+  #   this feature easily breaks (the columns won't necessarily align) if the
+  #   user edits GITFLU_MYST_SINCE_VERSION_TAG!), 2 more spaces, and `XX.X mons.`
+  #   is the longest date string (10 chars) we'd see, plus there's 1 space after
+  #   → 2+1+2+10+1=16.
+  local minwidth_plain=16
+  _print_filler () {
+    # Such a funny Bash+printf trick. Bash expands the {1..n} to the list '1 2 3 ... n'
+    # and then printf uses those as args to %s (without the 1..n, printf would print
+    # once and exit), but we also truncate the arg value, %.0s, so printf doesn't
+    # actually print the number from the list input, but instead just prints the
+    # other format string parts (the space we want to repeat) over and over again.
+    if ${GITFLU_MYST_ALIGN_COLS}; then
+      eval "printf ' %.0s' {1..${minwidth_plain}}"
+    else
+      # Echo 2 spaces, like we'd do before the '🏷', below, so there's
+      # brief emptiness between the previous column value (`☻`) and the
+      # next value.
+      echo "  "
+    fi
+  }
+  local sync_icon="${GITFLU_MYST_SINCE_VERSION_TAG}"
+  # - If tagged, enforce minwidth on tag string: we'll set the width on just
+  #   the time portion, so ignore 5 characters from the previous calculation
+  #   (the first 2 spaces, the '🏷', and the next 2 spaces)
+  #   → 16-5 = 11.
+  local minwidth_fancy=11
+  # Get the epoch when the repo was last tagged.
+  local tagtime
+  tagtime=$(git_last_version_epoch_ts)
+  # If not tagged, original code filled w/ spaces, so final "WIP" cells
+  # aligned in their column, e.g.,
+  #   [ $? -ne 0 ] && _print_filler && return 0
+  # but we can do better! Show the age of the repository!
+  if [ $? -ne 0 ]; then
+    tagtime=$(git_since_init_epoch_ts)
+    sync_icon="${GITFLU_MYST_SINCE_INIT_COMMIT}"
+  fi
+  # No need to check $? again. #nofail
+  # Determine the time elapsed between the tag (or init commit) and now.
+  local nowtime=$(date +%s)
+  local elapsed=$((nowtime - tagtime))
+  local scaled_tm="$(python_prettify_elapsed ${elapsed})"
+  # It used to be that there's no output if user does not have pedantic_timedelta
+  # installed; but now we have a setup check that disables age reporting if it's
+  # not installed. So now there's no output if the pedantic_timedelta call failed
+  # (e.g., the API changed, but we didn't add a version check).
+  [ -z "${scaled_tm}" ] && _print_filler && return 0
+  # Ensure the time string is a minimum width, so later column values align.
+  scaled_tm="$(eval "printf '%-${minwidth_fancy}s' '${scaled_tm}'")"
+  local pretty_tm="$(fg_lightgray)$(attr_emphasis)${scaled_tm}$(attr_reset)"
+  # The smiley face ☻ eats a space, so the 3 spaces here looks like 2 to users.
+  echo -e "   ${sync_icon}  ${pretty_tm}"
+}
+
+# ***
+
+prepare_part () {
+  local part="$1"
+  local width="$2"
+  echo "$(eval "printf '%-${width}s' '${part:0:${width}}'")"
+}
+
+prepare_text_on_branch () {
+  local name="${GITFLU_MYST_AT_BRANCH}"
+  if ${GITFLU_MYST_ALIGN_COLS}; then
+    # This is not the min-max algorithm my professor taught me. First,
+    # truncate the string to the desired width, like max() to an int.
+    # Then, expand the string to the desired width, like min().
+    # N.O.T.E: Very Much Bash-specific code. Not POSIX.
+    declare -a bparts
+    IFS='/' read -a bparts <<< "${name}"
+    if [ "${name}" != "${bparts[0]}" ] && [ ${#bparts} -ge 2 ]; then
+      local penultimate="$(prepare_part "${bparts[-2]}" ${GITFLU_MYST_BR_PART_PENULTIMATE_W})"
+      local terminating="$(prepare_part "${bparts[-1]}" ${GITFLU_MYST_BR_PART_TERMINATING_W})"
+      name="${penultimate}/${terminating}"
+    else
+      # MAGIC_NUMBER: Add one for the '/' separator.
+      local parts_and_sep_width=$((0 \
+        + GITFLU_MYST_BR_PART_PENULTIMATE_W \
+        + GITFLU_MYST_BR_PART_TERMINATING_W \
+        + 1))
+      name="$(prepare_part "${name}" ${parts_and_sep_width})"
+    fi
+  fi
+  local on_branch="$(fg_lightblue)${name}$(attr_reset)"
+  echo -e "${on_branch}"
+}
+
+# ***
+
+prepare_icon_public_remotes () {
+  # E.g., privy_icon=' 🎁'
+  local privy_icon=" ${GITFLU_MYST_HAS_PUBLIC_REMOTE}"
+  # E.g., privy_icon=" 🚽"
+  git_remotes_all_private && \
+    privy_icon=" ${GITFLU_MYST_ALL_REMOTES_PRIVY}"
+  echo -e "${privy_icon}"
+}
+
+# ***
+
+icon_alert () {
+  _icon_alert () {
+    echo -e "$(_alert_prefix)$(_alert_interior "${1}")$(_alert_suffix)"
+  }
+
+  _alert_prefix () {
+    _alert_exterior '▐'  # Vim's 'RB' digraph.
+  }
+
+  _alert_suffix () {
+    _alert_exterior '▌'  # Vim's 'lB' digraph.
+  }
+
+  _alert_exterior () {
+    echo -e "$(fg_red)${1}$(attr_reset)"
+  }
+
+  _alert_interior () {
+    echo -e "$(bg_red)${1}$(attr_reset)"
+  }
+
+  _icon_alert "${@}"
+}
+
+# ***
+
+CHORE_UNTIDY=1
+CHORE_MERGE_UP_LOCAL=2
+CHORE_PULL_DOWN_LOCAL=4
+CHORE_REBASE_WIPS_LOCAL=8
+CHORE_PUSH_UP_REMOTE=16
+CHORE_PULL_DOWN_REMOTE=32
+
+prepare_icon_synced_inner_self () {
+  local syncodes=0
+  # E.g., sync_icon=' 🙏 '
+  local at_branch="${GITFLU_MYST_AT_BRANCH}"
+  local up_branch="${GITFLU_MYST_UP_BRANCH}"
+  local sync_icon=" ${GITFLU_MYST_LOCAL_REPO_AGREE} "
+  # Whatever branch this is (including 'master', i.e., even branch with no
+  # ancestor), always show alert icon if the active branch is not pristine.
+  # Or, if there's a local upstream branch, show alert icon if the current
+  # branch is ahead of that upstream local; unless current branch is tipped,
+  # then show a different icon but don't mean it as an alert, just as info.
+  if [ -n "$(git status --porcelain)" ]; then
+    sync_icon="$(icon_alert "${GITFLU_MYST_LOCAL_REPO_MESSY}")"
+    let "syncodes |= CHORE_UNTIDY"
+  elif [ -n "${up_branch}" ]; then
+    if ! git merge-base --is-ancestor HEAD ${up_branch}; then
+      if no_up_branch_chores; then
+        # The user made a rule to ignore local branch work for this project.
+        sync_icon=" ${GITFLU_MYST_LOCAL_REPO_NOCHR} "
+      elif branch_tipped "${at_branch}"; then
+        # A "tip" branch has commits rebased on top of master, but the commits
+        # are not expected to be merged by the user to local upstream branch.
+        sync_icon=" ${GITFLU_MYST_LOCAL_REPO_TIPBR} "
+      else
+        # E.g., sync_icon=' 👊 ', but with, e.g., bordered red background.
+        sync_icon="$(icon_alert "${GITFLU_MYST_LOCAL_REPO_AHEAD}")"
+        let "syncodes |= CHORE_MERGE_UP_LOCAL"
+      fi
+      warn_up_not_ancestor "${up_branch}"
+    elif ! git merge-base --is-ancestor ${up_branch} HEAD; then
+      # Local branch is tidy; there exists a progenitor branch;
+      # and the progenitor branch is ahead of this branch.
+      # - Defaults to sailboat, ⛵, i.e., remote branch has sailed away.
+      sync_icon=" ${GITFLU_MYST_PROGENITOR_AHEAD} "
+      let "syncodes |= CHORE_PULL_DOWN_LOCAL"
+    fi
+  fi
+  echo -e "${sync_icon}"
+  return ${syncodes}
+}
+
+# ***
+
+fill_placeholder () {
+  local n_times=${1:-1}
+  # Note:
+  #     $ echo -n 🏷 | wc --chars
+  #     1
+  #     $ echo -n 🏷 | wc --bytes
+  #     4
+  #     # And same for 👍 and other Unicode characters.
+  # But number of bytes is not the same as how many screen
+  # columns each Unicode character typically uses, which is 2.
+  # MAGIC_NUMBER(_of_spaces): space + 2-char-unicode + space = 4
+  #                                                        1234
+  #                                                        vvvv
+  br_icons="$(eval "printf '${GITFLU_MYST_SEPARATE_REMOTES}    %.0s' {1..${n_times}}")"
+  echo -e "${br_icons}"
+}
+
+# ***
+
+# Indicate whether the branch is a WIP branch (local/private/alpha), meaning
+# we don't care if the user has not pushed the branch to the remote -- show,
+# e.g., a shrugging person 🤷 to indicate that the branch does not exist
+# remotely ("who cares"), and show a question mark ❗ if it does exist (to
+# tell user they might want to delete it).
+remote_wip_icon () {
+  local remote_branch_absent="$1"
+  if ${remote_branch_absent}; then
+    echo -e " ${GITFLU_MYST_WIP_REMOTE_ABSENT} "
+  else
+    echo -e " ${GITFLU_MYST_WIP_REMOTE_EXISTS} "
+  fi
+}
+
+# ***
+
+prepare_icon_synced_remote () {
+  local remote="$1"
+  local iconok="$2"
+  local iconxx="$3"
+  local diffco="$4"
+  local syncodes=0
+  local at_branch="${GITFLU_MYST_AT_BRANCH}"
+  local sync_icon=" ${iconok} "
+  local remote_branch_absent=false
+
+  # Check that the branch exists on the remote.
+  # Note that we don't want to make a network call, so avoiding, e.g.,
+  #   git show-ref --verify --quiet refs/remotes/${remote}/${at_branch}
+  # and well as `git ls-remote`.
+  if ! remote_branch_exists "${remote}" "${at_branch}"; then
+    # Default to placeholder "icon" (blank spaces).
+    sync_icon="$(fill_placeholder "1")"
+    remote_branch_absent=true
+  fi
+
+  if branch_is_local_alpha_or_wip "${at_branch}"; then
+    sync_icon="$(remote_wip_icon "${remote_branch_absent}")"
+  elif \
+  # Note that merge-base fails if the first commit (branch) is not an ancestor
+  # of the second commit (branch), but that it also fails if neither commit
+  # (branch) exists, e.g., if the branch has not been pushed to the remote.
+  # On the other hand, this call is successful if the two branches are at the
+  # same commit, or if the latter is ahead of the former.
+  ! git merge-base --is-ancestor ${diffco} refs/remotes/${remote}/${at_branch} \
+    2> /dev/null
+  then
+    # If this is not the first remote we've checked (i.e., diffco is not HEAD,
+    # so this is not the 'develop' remote, but the 'upstream' remote instead);
+    # and if branch is tipped, e.g., 'tip/2020-03-09-abcd1234'; then not expecting
+    # user to push to that remote; and showing a special icon instead.
+    if [ "${diffco}" != "HEAD" ] && branch_tipped "${at_branch}"; then
+      # Local branch is tipped, e.g., tip/2020-03-09-abcd1234, and the
+      # 'upstream' remote branch does not exist, or it's not up to date.
+      if ${remote_branch_absent}; then
+        # Preferable: this tipped branch may have been pushed to (e.g., my) 'origin',
+        # but it has not been pushed to upstream (i.e., some organization's) 'upstream'.
+        sync_icon=" ${GITFLU_MYST_TIP_UPSTREAM_ABSENT} "
+      else
+        # The branch exists in a secondary or lesser remote (per GITFLU_MYST_REMOTE_HIERARCHY
+        # order), e.g., branch is 'upstream'; and it's behind the local branch.
+        # - (lb): This is not part of my workflow, so showing different, but not doing
+        # anything else; this use case is unlikely/not expected given how I work(flow).
+        sync_icon=" ${GITFLU_MYST_TIP_UPSTREAM_EXISTS} "
+      fi
+    else
+      # Show the alert icon to tell user they probably want to push their branch to
+      # the remote. Also verify that the user did not rebase themselves into a corner,
+      # i.e., call merge-base like above, but with the parameters flipped, to verify
+      # that the remote branch is an ancestor of this branch (otherwise, to merge
+      # changes, user might have to force-push to the remote branch, egad!).
+      sync_icon="$(icon_alert "${iconxx}")"
+      let "syncodes |= CHORE_PUSH_UP_REMOTE"
+      warn_up_not_ancestor "remotes/${remote}/${at_branch}"
+    fi
+  elif ! git merge-base --is-ancestor refs/remotes/${remote}/${at_branch} ${diffco} \
+  2> /dev/null; then
+    # The remote/branch is ahead of this remote/branch. ⛵ Come Sail Away.
+    sync_icon=" ${GITFLU_MYST_PROGENITOR_AHEAD} "
+    let "syncodes |= CHORE_PULL_DOWN_REMOTE"
+  fi
+
+  echo -e "${sync_icon}"
+  return ${syncodes}
+}
+
+# ***
+
+prepare_icons_remotes () {
+  local syncodes=0
+
+  local re_icons=''
+
+  # For each loop, compare the remote/branch against the previous remote/branch.
+  # For the first time through, compare against $(git_branch_name) aka 'HEAD'.
+  local currbr="${GITFLU_MYST_AT_BRANCH}"
+  local diffco="HEAD"
+
+  # Loop over the (branch, icon, icon) triplets.
+  while [ "$1" != '' ]; do
+    local remote="$1"
+    local iconok="$2"
+    local iconxx="$3"
+
+    # Oddly, if you `shift n` more than there are args, nothing gets shifted.
+    # To ensure `while` exits if args is not a multiple of 3, shift individually.
+    # - Not safe: `shift 3`.
+    shift 3
+
+    local re_icon
+    if remote_exists "${remote}"; then
+      re_icon="$(prepare_icon_synced_remote "${remote}" "${iconok}" "${iconxx}" "${diffco}")"
+      let "syncodes |= $?"
+    elif ${GITFLU_MYST_ALIGN_COLS}; then
+      # MAGIC_NUMBER: 4: Leading and trailing spaces, and two-column unicode character.
+      re_icon="$(fill_placeholder "1")"
+    else
+      re_icon=''
+    fi
+    if [ -n "${re_icon}" ]; then
+      re_icons="${re_icons}${GITFLU_MYST_SEPARATE_REMOTES}${re_icon}"
+    fi
+    # Only change diffco (previous reference branch) if it exists.
+    if remote_branch_exists "${remote}" "${currbr}"; then
+      diffco="${remote}/${currbr}"
+    fi
+  done
+
+  echo -e "${re_icons}"
+
+  return ${syncodes}
+}
+
+# ***
+
+prepare_icons_branches () {
+  local syncodes=0
+
+  local br_icons=''
+  br_icons="$(prepare_icon_synced_inner_self)"
+  let "syncodes |= $?"
+
+  br_icons="${br_icons}$(prepare_icons_remotes "${@}")"
+  let "syncodes |= $?"
+
+  echo -e "${br_icons}"
+  return ${syncodes}
+}
+
+# ***
+
+prepare_icons_rebasing () {
+  # Echoes one icon for every WIP or SQ commit between branch and upbranch.
+
+  # If no up-branch (i.e., on 'master'), do nothing.
+  local up_branch="${GITFLU_MYST_UP_BRANCH}"
+  [ -z "${up_branch}" ] && return
+
+  # If no greps, do nothing,
+  [ -z "${GITFLU_MYST_WIP_COMMIT_REGEX}" ] && return 0
+
+  # Prepare the git-log "--grep" components.
+  local wip_greps
+  IFS=',' read -a wip_greps <<< "${GITFLU_MYST_WIP_COMMIT_REGEX}"
+  local greps=''
+  local grepclause
+  for grepclause in "${wip_greps[@]}"; do
+    greps="${greps} -E --grep \"${grepclause}\""
+  done
+
+  # (lb): Is there a better way to get the commit count? Use git-log's
+  # --grep to match commit messages, and then use --pretty to ensure
+  # there's just one matching line per match. And then count, wc -l.
+  #
+  # Note: --pretty=format: places newlines between commits. Use tformat to place
+  # newlines after each commit. Otherwise there's no newline after last commit,
+  # and we'd otherwise have to check empty string and return 0, or add 1 if not empty.
+  #
+  #   >&2 echo "git --no-pager log --pretty=tformat:\"%H\" ${greps} ${up_branch}..HEAD"
+  local wip_cnt
+  wip_cnt=$( \
+    eval "git --no-pager log --pretty=tformat:\"%H\" ${greps} ${up_branch}..HEAD" \
+    | wc -l \
+  )
+
+  [ ${wip_cnt} -eq 0 ] && return 0
+
+  local wip_icon="${GITFLU_MYST_WIP_COMMIT_FOUND}"
+
+  # - We could prints 1 emoji for each WIP counted
+  #   e.g., 5 WIP commits would print:
+  #     🏭 🏭 🏭 🏭 🏭
+  #   - except it causes long lines and line breaks and doesn't help us align columns.
+  # So we'll do so if not caring about column alignment.
+  if ${GITFLU_MYST_ALIGN_COLS}; then
+    # Show an abbreviated WIP report (that's less likely to be be very wide)
+    # for the myrepos all-repos status report.
+    eval "printf '${wip_icon}×%d' ${wip_cnt}"
+  else
+    eval "printf '${wip_icon} %.0s' {1..${wip_cnt}}"
+  fi
+
+  [ ${wip_cnt} -gt 255 ] && wip_cnt=255
+  return ${wip_cnt}
+}
+
+# ***
+
+prepare_icon_meritorious () {
+  local syncodes="$1"
+  local pt_sqwipes="$2"
+  local wip_cnt="$3"
+  local pt_rewip="$4"
+
+  local pt_badge
+  if [ ${syncodes} -eq 0 ]; then
+    # E.g., icon="🛡", or "🌈", or whatever is set,
+    # followed by a green face ☻ to indicate green.
+    pt_badge="${GITFLU_MYST_ICON_ACHIEVEMENT}"
+    pt_badge="${pt_badge}$(fg_lightgreen)${GITFLU_MYST_ICON_TEMPERATURE}"
+  else
+    # For multiple-repo reporting, show spaces instead of rainbow shield.
+    local no_badge="${GITFLU_MYST_ALIGN_NO_MERIT_FILLER}"
+    # Show a more mild alert if a WIP branch and the only
+    # issue is that it needs to be merged to its progenitor.
+    # - Award the user somewhat -- they should merge their
+    #   branch, but otherwise their branch is in good shape.
+    local tempcolor
+    if [ $((${syncodes} & ${CHORE_UNTIDY})) -ne 0 ]; then
+      # Red color icon: most important chore: user needs to tidy up
+      # the working tree (commit changes, add untracked files, etc.).
+      tempcolor="$(fg_red)"
+    elif [ \
+      $((${syncodes} & ( \
+        ${CHORE_REBASE_WIPS_LOCAL} | ${CHORE_PULL_DOWN_LOCAL} | ${CHORE_PULL_DOWN_REMOTE} \
+      ))) -ne 0 \
+    ]; then
+      # Light yellow: Chores of medium difficulty: user may need to rebase.
+      # One or more local WIP branches need to be rebased; or the local
+      # progenitor branch or a remote branch is ahead of the local branch.
+      tempcolor="$(fg_lightyellow)"
+    elif [ \
+      $((${syncodes} & (${CHORE_MERGE_UP_LOCAL} | ${CHORE_PUSH_UP_REMOTE}))) -ne 0 \
+    ]; then
+      # Light blue: Easy chores: `merge --ff-only` and `push` work, should be easy.
+      tempcolor="$(fg_lightblue)"
+    fi
+    pt_badge="${no_badge}${tempcolor}${GITFLU_MYST_ICON_TEMPERATURE}"
+  fi
+  pt_badge="${pt_badge}$(attr_reset)"
+
+  local tripsep="${GITFLU_MYST_TRIPLE_SEP}"
+
+  [ -n "${pt_sqwipes}" ] && pt_sqwipes=" ${pt_sqwipes}"
+
+  local commendation=" ${tripsep}"
+  ! ${GITFLU_MYST_ALIGN_COLS} && \
+    commendation="${commendation}${pt_sqwipes}"
+  commendation="${commendation} ${pt_badge}"
+
+  echo -e "${commendation}"
+}
+
+# ***
+
+prepare_extra_wip_reminder () {
+  local wip_cnt="$1"
+  local pt_sqwipes="$2"
+  [ ${wip_cnt} -eq 0 ] && return
+  local reminder="${GITFLU_MYST_WIP_REMINDER}"
+  ${GITFLU_MYST_ALIGN_COLS} && \
+    reminder=" ${reminder}:${pt_sqwipes}$(attr_reset)"
+  echo -e "${reminder}$(attr_reset)"
+}
+
+# ***
+
+prepare_branch_report () {
+  GITFLU_MYST_AT_BRANCH="$(git_branch_name)"
+
+  GITFLU_MYST_UP_BRANCH="$(branch_ancestor "${GITFLU_MYST_AT_BRANCH}")"
+  while [ -n "${GITFLU_MYST_UP_BRANCH}" ] && ! branch_exists "${GITFLU_MYST_UP_BRANCH}"; do
+    GITFLU_MYST_UP_BRANCH="$(branch_ancestor "${GITFLU_MYST_UP_BRANCH}")"
+  done
+
+  local pt_local
+  local pt_privy
+  local pt_branches
+  local pt_sqwipes
+
+  # We use subshells to make returning text easy, but then it makes passing
+  # other information difficult. Which is why we cue off the return code to
+  # track syncodes.
+  local syncodes=0
+  pt_local="$(prepare_text_on_branch)"
+  pt_privy="$(prepare_icon_public_remotes)"
+  pt_merge="$(prepare_icons_branches "${@}")" || let "syncodes |= $?"
+  local wip_cnt=0
+  pt_sqwipes="$(prepare_icons_rebasing)" || let "wip_cnt += $?"
+  [ ${wip_cnt} -eq 0 ] || let "syncodes |= CHORE_REBASE_WIPS_LOCAL"
+  local pt_merit="$(prepare_icon_meritorious "${syncodes}" "${pt_sqwipes}" "${wip_cnt}")"
+  local pt_vrage="$(git_last_version_age)"
+  local pt_rewip="$(prepare_extra_wip_reminder "${wip_cnt}" "${pt_sqwipes}")"
+
+  echo -e "${pt_local}${pt_privy} ${GITFLU_MYST_SEP} ${pt_merge}${pt_merit}${pt_vrage}${pt_rewip}"
+}
+
+# ***
+
+echo_branch_report () {
+  # Set default args, unless user passed.
+  [ "${#}" -eq 0 ] && \
+    set -- ${GITFLU_MYST_REMOTE_HIERARCHY}
+  prepare_branch_report "${@}"
+}
+
+# ***
+
+my_merge_status_report () {
+  echo_branch_report "${@}"
+  git status --short
+}
+
+# ***
+
+main () {
+  local before_cd="$(pwd -L)"
+  # So that a git alias works, which run !commands from top-level, cd maybe.
+  [ -n "${GIT_PREFIX}" ] && cd "${GIT_PREFIX}"
+  my_merge_status_config
+  my_merge_status_report "${@}"
+  cd "${before_cd}"
+}
+
+if [ "$0" = "${BASH_SOURCE}" ]; then
+  main "${@}"
+fi
+
