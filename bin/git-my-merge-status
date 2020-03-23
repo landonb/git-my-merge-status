@@ -955,6 +955,11 @@ prepare_icons_remotes () {
     local iconok="$2"
     local iconxx="$3"
 
+    if [ -z "${remote}" ] || [ -z "${iconok}" ] || [ -z "${iconxx}" ]; then
+      >&2 echo "ERROR: GITFLU_MYST_REMOTE_HIERARCHY malformed!"
+      exit 1
+    fi
+
     # Oddly, if you `shift n` more than there are args, nothing gets shifted.
     # To ensure `while` exits if args is not a multiple of 3, shift individually.
     # - Not safe: `shift 3`.
