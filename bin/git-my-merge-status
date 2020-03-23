@@ -891,7 +891,7 @@ prepare_icon_synced_remote () {
     2> /dev/null
   then
     # If this is not the first remote we've checked (i.e., diffco is not HEAD,
-    # so this is not the 'develop' remote, but the 'upstream' remote instead);
+    # so this is not the 'origin' remote, but the 'upstream' remote instead);
     # and if branch is tipped, e.g., 'tip/2020-03-09-abcd1234'; then not expecting
     # user to push to that remote; and showing a special icon instead.
     if [ "${diffco}" != "HEAD" ] && branch_tipped "${at_branch}"; then
