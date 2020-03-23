@@ -587,22 +587,25 @@ git_last_version_tag_describe_safe () {
   git_last_version_tag_describe || echo '0.0.0-✗-g0000000'
 }
 
-GITFLU_RE_LONG_TAG_PARTS='([^-]+)-([^-]+)-(.*)'
+# Unused...
+if false; then
+  GITFLU_RE_LONG_TAG_PARTS='([^-]+)-([^-]+)-(.*)'
 
-git_last_version_name () {
-  local described="$(git_last_version_tag_describe_safe)"
-  echo ${described} | /bin/sed -E "s/${GITFLU_RE_LONG_TAG_PARTS}/\1/g"
-}
+  git_last_version_name () {
+    local described="$(git_last_version_tag_describe_safe)"
+    echo ${described} | /bin/sed -E "s/${GITFLU_RE_LONG_TAG_PARTS}/\1/g"
+  }
 
-git_last_version_dist () {
-  local described="$(git_last_version_tag_describe_safe)"
-  echo ${described} | /bin/sed -E "s/${GITFLU_RE_LONG_TAG_PARTS}/\2/g"
-}
+  git_last_version_dist () {
+    local described="$(git_last_version_tag_describe_safe)"
+    echo ${described} | /bin/sed -E "s/${GITFLU_RE_LONG_TAG_PARTS}/\2/g"
+  }
 
-git_last_version_absent () {
-  local distance="$(git_last_version_dist)"
-  [ "${distance}" = '✗' ]
-}
+  git_last_version_absent () {
+    local distance="$(git_last_version_dist)"
+    [ "${distance}" = '✗' ]
+  }
+fi
 
 git_last_version_epoch_ts () {
   # Note that the "described" tag output (e.g., 0.12.0-828-g0266e06) is a
