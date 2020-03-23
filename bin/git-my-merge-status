@@ -397,6 +397,10 @@ attr_reset () {
   printf "\033[0m";
 }
 
+bg_jade () {
+  printf "\033[48;2;0;175;95m"
+}
+
 bg_red () {
   printf "\033[41m"
 }
@@ -570,6 +574,8 @@ warn_up_not_ancestor () {
 
 # ***
 
+GITFLU_RE_VERSION_TAG='[v0-9][0-9.]*'
+
 git_last_version_tag_describe () {
   # By default, git-describe returns a commit-ish object representing the same
   # commit as the referenced commit (which defaults to HEAD). The described name
@@ -580,7 +586,7 @@ git_last_version_tag_describe () {
   # So specify an --abbrev=0 to "suppress long format, only showing the closest tag."
   # And note that I don't see a difference with --long or not. Not sure why I added.
   # But it cannot be used with --abbrev=0. So easy to decide what to do. Not use it.
-  git describe --tags --abbrev=0 --match '[v0-9][0-9.]*' 2> /dev/null
+  git describe --tags --abbrev=0 --match "${GITFLU_RE_VERSION_TAG}" 2> /dev/null
 }
 
 git_last_version_tag_describe_safe () {
@@ -645,6 +651,28 @@ python_prettify_elapsed () {
      2> /dev/null
 }
 
+git_last_version_tag_icon () {
+  local commit_tags
+  commit_tags="$(git --no-pager tag --points-at HEAD)"
+  if [ -z "${commit_tags}" ]; then
+    # The latest version tag is on an older commit (than HEAD).
+    echo -n "${GITFLU_MYST_SINCE_VERSION_TAG} "
+  else
+    local version_tags
+    version_tags="$(echo "${commit_tags}" | grep -e "${GITFLU_RE_VERSION_TAG}")"
+    if [ "$(echo "${version_tags}" | wc -l)" -eq 0 ]; then
+      # Latest commit tagged, but not with a recognizable version string.
+      echo -n "${GITFLU_MYST_SINCE_VERSION_TAG} "
+    elif [ "$(echo "${version_tags}" | wc -l)" -ne 1 ]; then
+      # More than 1 version tag found on latest commit!
+      echo -n "$(bg_red)${GITFLU_MYST_SINCE_VERSION_TAG}+$(attr_reset)"
+    else
+      # Perfect! The latest commit is versioned!
+      echo -n "$(bg_jade)${GITFLU_MYST_SINCE_VERSION_TAG} $(attr_reset)"
+    fi
+  fi
+}
+
 git_last_version_age () {
   ${GITFLU_MYST_HIDE_AGE} && echo ' ' && return 0
   # If not tagged, return whitespace padding, so final "WIP" column aligns.
@@ -670,7 +698,7 @@ git_last_version_age () {
       echo "  "
     fi
   }
-  local sync_icon="${GITFLU_MYST_SINCE_VERSION_TAG}"
+  local vtag_icon="$(git_last_version_tag_icon)"
   # - If tagged, enforce minwidth on tag string: we'll set the width on just
   #   the time portion, so ignore 5 characters from the previous calculation
   #   (the first 2 spaces, the '🏷', and the next 2 spaces)
@@ -685,7 +713,7 @@ git_last_version_age () {
   # but we can do better! Show the age of the repository!
   if [ $? -ne 0 ]; then
     tagtime=$(git_since_init_epoch_ts)
-    sync_icon="${GITFLU_MYST_SINCE_INIT_COMMIT}"
+    vtag_icon="${GITFLU_MYST_SINCE_INIT_COMMIT}"
   fi
   # No need to check $? again. #nofail
   # Determine the time elapsed between the tag (or init commit) and now.
@@ -701,7 +729,7 @@ git_last_version_age () {
   scaled_tm="$(eval "printf '%-${minwidth_fancy}s' '${scaled_tm}'")"
   local pretty_tm="$(fg_lightgray)$(attr_emphasis)${scaled_tm}$(attr_reset)"
   # The smiley face ☻ eats a space, so the 3 spaces here looks like 2 to users.
-  echo -e "   ${sync_icon}  ${pretty_tm}"
+  echo -e "   ${vtag_icon}  ${pretty_tm}"
 }
 
 # ***
