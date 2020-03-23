@@ -894,7 +894,15 @@ prepare_icon_synced_remote () {
     # so this is not the 'origin' remote, but the 'upstream' remote instead);
     # and if branch is tipped, e.g., 'tip/2020-03-09-abcd1234'; then not expecting
     # user to push to that remote; and showing a special icon instead.
-    if [ "${diffco}" != "HEAD" ] && branch_tipped "${at_branch}"; then
+    # 2020-03-23: Rather than check previous not 'HEAD' to infer this remote
+    # is not the first remote, e.g., 'origin', check the first remote directly,
+    # e.g., not:
+    #   if [ "${diffco}" != "HEAD" ] && branch_tipped "${at_branch}"; then
+    # but the following instead (which works when, say, there is no 'origin',
+    # and ${diffco} is still 'HEAD' for multiple calls to this function):
+    if [ "${remote}" != "${GITFLU_MYST_REMOTE_HIERARCHY[0]}" ] \
+       && branch_tipped "${at_branch}"; \
+    then
       # Local branch is tipped, e.g., tip/2020-03-09-abcd1234, and the
       # 'upstream' remote branch does not exist, or it's not up to date.
       if ${remote_branch_absent}; then
