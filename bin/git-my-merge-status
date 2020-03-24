@@ -713,7 +713,7 @@ git_last_version_age () {
   # but we can do better! Show the age of the repository!
   if [ $? -ne 0 ]; then
     tagtime=$(git_since_init_epoch_ts)
-    vtag_icon="${GITFLU_MYST_SINCE_INIT_COMMIT}"
+    vtag_icon="${GITFLU_MYST_SINCE_INIT_COMMIT} "
   fi
   # No need to check $? again. #nofail
   # Determine the time elapsed between the tag (or init commit) and now.
@@ -729,7 +729,7 @@ git_last_version_age () {
   scaled_tm="$(eval "printf '%-${minwidth_fancy}s' '${scaled_tm}'")"
   local pretty_tm="$(fg_lightgray)$(attr_emphasis)${scaled_tm}$(attr_reset)"
   # The smiley face ☻ eats a space, so the 3 spaces here looks like 2 to users.
-  echo -e "   ${vtag_icon}  ${pretty_tm}"
+  echo -e "   ${vtag_icon} ${pretty_tm}"
 }
 
 # ***
