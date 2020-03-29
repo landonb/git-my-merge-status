@@ -382,7 +382,7 @@ my_merge_status_config () {
 
 python_get_distribution () {
   local pkgname="$1"
-  /usr/bin/env python -c \
+  /usr/bin/env python3 -c \
     "from pkg_resources import get_distribution; \
      print(get_distribution('${pkgname}').version);"
 }
@@ -644,7 +644,7 @@ git_since_init_epoch_ts () {
 python_prettify_elapsed () {
   local seconds="${1:-0}"
   # This spits to stderr if user does not have package installed.
-  /usr/bin/env python -c \
+  /usr/bin/env python3 -c \
     "from pedantic_timedelta import PedanticTimedelta; \
      pdtd = PedanticTimedelta(seconds=${seconds}); \
      print(pdtd.time_format_scaled(field_width=4, precision=1, abbreviate=4)[0]);" \
