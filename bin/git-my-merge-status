@@ -114,7 +114,7 @@
 # - If you cannot name a branch specially and want to have it ignored by
 #   this script (i.e., so you aren't needled to merge changes to 'develop',
 #   because you checked out a pinned branch), you can added rules to the
-#   ignore file (defined by GITFLU_MYST_NOCHORES_FILE).
+#   ignore file (defined by GITSMART_MYST_NOCHORES_FILE).
 #
 # SYMBOLOGY:
 #
@@ -127,7 +127,7 @@
 #   [👊] active branch needs work: ahead of local ancestor, or has WIP or squash! commits;
 #    🙏  active branch is pristine: at same commit as ancenstor, and no WIP/squash commits.
 #    🍬  active branch is a TIP branch, deliberately ahead of progenitor and 'upstream'.
-#    🙈  chores are ignored per rule in GITFLU_MYST_NOCHORES_FILE (except tidiness).
+#    🙈  chores are ignored per rule in GITSMART_MYST_NOCHORES_FILE (except tidiness).
 # - [👆] active branch not pushed to 'origin' remote -- not shown for WIP branches.
 #    👍  active branch same commit as 'origin', e.g., refs/remotes/origin/<branch>.
 # - [⚡] active branch not pushed to 'upstream' remote -- not shown for WIP or TIP branches.
@@ -224,7 +224,7 @@
 #     'origin').
 #   - my-merge-status will also notify you if the feature branch has not
 #     yet been merged to the *progenitor* branch (which is the 'develop'
-#     branch if it exists, or 'master' (or however GITFLU_MYST_BRANCH_HIERARCHY
+#     branch if it exists, or 'master' (or however GITSMART_MYST_BRANCH_HIERARCHY
 #     is configured)).
 #   - So that a multiple-project my-merge-status shows the most relevant branch
 #     name snippet (because the branch name space is limited), use the same
@@ -242,7 +242,7 @@
 #           features/FOO-123/2020-03-10-drink-fizz-buzz-02 → 123/2020-03-10
 #       - (lb): I realize the three-character prefix might be limiting,
 #         but I like it for its brevity. Consider setting the environment
-#         variable, GITFLU_MYST_BR_PART_PENULTIMATE_W, if you'd like to
+#         variable, GITSMART_MYST_BR_PART_PENULTIMATE_W, if you'd like to
 #         specify a different width.
 # - Zero or more other branches, not named like or adhering to any previously
 #   mentioned branch type.
@@ -252,7 +252,7 @@
 #     behind) the progenitor branch.
 #     - If you want to tell my-merge-status to not check progenitor tidiness
 #       on a repository, add the path to the repository to the file indicated
-#       by GITFLU_MYST_NOCHORES_FILE (which is expected to be found
+#       by GITSMART_MYST_NOCHORES_FILE (which is expected to be found
 #       on PATH and defaults to '.my-merge-status-nochores').
 #
 # PUBLIC REMOTE DEFAULT BRANCHES:
@@ -304,7 +304,7 @@ my_merge_status_config () {
 
   # Progenitor branches, e.g., check HEAD against 'develop' if feature
   # branch, 'develop' against 'master', and 'master' has no progenitor.
-  GITFLU_MYST_BRANCH_HIERARCHY="${GITFLU_MYST_BRANCH_HIERARCHY:-master develop}"
+  GITSMART_MYST_BRANCH_HIERARCHY="${GITSMART_MYST_BRANCH_HIERARCHY:-master develop}"
 
   # - Each remote has three parts (so the array size is a multiple of 3):
   #   The first part is the remote name, followed by the icon used when the
@@ -315,71 +315,71 @@ my_merge_status_config () {
   #     with community, i.e., the community that uses and works from the main
   #     source repository; and I guess the lighting bolt means you need to send
   #     a shock -- your bits! -- upstream to the organization repo.
-  GITFLU_MYST_REMOTE_HIERARCHY="${GITFLU_MYST_REMOTE_HIERARCHY:-origin 👍 👆 upstream 🌟 ⚡}"
+  GITSMART_MYST_REMOTE_HIERARCHY="${GITSMART_MYST_REMOTE_HIERARCHY:-origin 👍 👆 upstream 🌟 ⚡}"
 
   # *** Other icons and config.
 
-  GITFLU_MYST_HAS_PUBLIC_REMOTE="${GITFLU_MYST_HAS_PUBLIC_REMOTE:-🎁}"
-  GITFLU_MYST_ALL_REMOTES_PRIVY="${GITFLU_MYST_ALL_REMOTES_PRIVY:-🚽}"
-  GITFLU_MYST_LOOKS_PUBLIC_REGEX="${GITFLU_MYST_LOOKS_PUBLIC_REGEX:-^(ssh://git@|git@|https://)}"
+  GITSMART_MYST_HAS_PUBLIC_REMOTE="${GITSMART_MYST_HAS_PUBLIC_REMOTE:-🎁}"
+  GITSMART_MYST_ALL_REMOTES_PRIVY="${GITSMART_MYST_ALL_REMOTES_PRIVY:-🚽}"
+  GITSMART_MYST_LOOKS_PUBLIC_REGEX="${GITSMART_MYST_LOOKS_PUBLIC_REGEX:-^(ssh://git@|git@|https://)}"
 
-  GITFLU_MYST_LOCAL_REPO_AGREE="${GITFLU_MYST_LOCAL_REPO_AGREE:-🙏}"
-  GITFLU_MYST_LOCAL_REPO_AHEAD="${GITFLU_MYST_LOCAL_REPO_AHEAD:-👊}"
-  GITFLU_MYST_LOCAL_REPO_MESSY="${GITFLU_MYST_LOCAL_REPO_MESSY:-👇}"
-  GITFLU_MYST_LOCAL_REPO_NOCHR="${GITFLU_MYST_LOCAL_REPO_NOCHR:-🙈}"
-  GITFLU_MYST_LOCAL_REPO_TIPBR="${GITFLU_MYST_LOCAL_REPO_TIPBR:-🍬}"
+  GITSMART_MYST_LOCAL_REPO_AGREE="${GITSMART_MYST_LOCAL_REPO_AGREE:-🙏}"
+  GITSMART_MYST_LOCAL_REPO_AHEAD="${GITSMART_MYST_LOCAL_REPO_AHEAD:-👊}"
+  GITSMART_MYST_LOCAL_REPO_MESSY="${GITSMART_MYST_LOCAL_REPO_MESSY:-👇}"
+  GITSMART_MYST_LOCAL_REPO_NOCHR="${GITSMART_MYST_LOCAL_REPO_NOCHR:-🙈}"
+  GITSMART_MYST_LOCAL_REPO_TIPBR="${GITSMART_MYST_LOCAL_REPO_TIPBR:-🍬}"
 
-  GITFLU_MYST_PROGENITOR_AHEAD="${GITFLU_MYST_PROGENITOR_AHEAD:-⛵}"
+  GITSMART_MYST_PROGENITOR_AHEAD="${GITSMART_MYST_PROGENITOR_AHEAD:-⛵}"
 
-  GITFLU_MYST_WIP_BRANCH_REGEX="${GITFLU_MYST_WIP_BRANCH_REGEX:-^alpha-.*,^wip/.*,^a[0-9]\\\+/.*}"
+  GITSMART_MYST_WIP_BRANCH_REGEX="${GITSMART_MYST_WIP_BRANCH_REGEX:-^alpha-.*,^wip/.*,^a[0-9]\\\+/.*}"
   # 'WIP' is my own convention. 'squash!' is from calls to `git commit --squash=<commit>`.
-  GITFLU_MYST_WIP_COMMIT_REGEX="${GITFLU_MYST_WIP_COMMIT_REGEX:-^WIP(:|$),^squash!}"
-  GITFLU_MYST_WIP_REMOTE_ABSENT="${GITFLU_MYST_WIP_REMOTE_ABSENT:-🤷}"
-  GITFLU_MYST_WIP_REMOTE_EXISTS="${GITFLU_MYST_WIP_REMOTE_EXISTS:-❗}"
-  GITFLU_MYST_WIP_COMMIT_FOUND="${GITFLU_MYST_WIP_COMMIT_FOUND:-🏭}"
-  [ -z ${GITFLU_MYST_WIP_REMINDER+x} ] && \
-    GITFLU_MYST_WIP_REMINDER="$(fg_tan)$(attr_emphasis)† WIP"
+  GITSMART_MYST_WIP_COMMIT_REGEX="${GITSMART_MYST_WIP_COMMIT_REGEX:-^WIP(:|$),^squash!}"
+  GITSMART_MYST_WIP_REMOTE_ABSENT="${GITSMART_MYST_WIP_REMOTE_ABSENT:-🤷}"
+  GITSMART_MYST_WIP_REMOTE_EXISTS="${GITSMART_MYST_WIP_REMOTE_EXISTS:-❗}"
+  GITSMART_MYST_WIP_COMMIT_FOUND="${GITSMART_MYST_WIP_COMMIT_FOUND:-🏭}"
+  [ -z ${GITSMART_MYST_WIP_REMINDER+x} ] && \
+    GITSMART_MYST_WIP_REMINDER="$(fg_tan)$(attr_emphasis)† WIP"
   # File with paths of repos whose up-branch tidiness to ignore,
   # e.g., if you checked out a release branch, say, 'release-1.0',
   # tell MYST to not worry about relationship to 'develop' branch.
-  GITFLU_MYST_NOCHORES_FILE="${GITFLU_MYST_NOCHORES_FILE:-.my-merge-status-nochores}"
+  GITSMART_MYST_NOCHORES_FILE="${GITSMART_MYST_NOCHORES_FILE:-.my-merge-status-nochores}"
 
-  GITFLU_MYST_TIP_BRANCH_REGEX="${GITFLU_MYST_TIP_BRANCH_REGEX:-^tip/}"
+  GITSMART_MYST_TIP_BRANCH_REGEX="${GITSMART_MYST_TIP_BRANCH_REGEX:-^tip/}"
   # NOTE: The kangaroo eats up an addition column, not sure why, so appending space.
-  GITFLU_MYST_TIP_UPSTREAM_ABSENT="${GITFLU_MYST_TIP_UPSTREAM_ABSENT:-🦘 }"
-  GITFLU_MYST_TIP_UPSTREAM_EXISTS="${GITFLU_MYST_TIP_UPSTREAM_EXISTS:-❓}"
+  GITSMART_MYST_TIP_UPSTREAM_ABSENT="${GITSMART_MYST_TIP_UPSTREAM_ABSENT:-🦘 }"
+  GITSMART_MYST_TIP_UPSTREAM_EXISTS="${GITSMART_MYST_TIP_UPSTREAM_EXISTS:-❓}"
 
-  GITFLU_MYST_ICON_ACHIEVEMENT="${GITFLU_MYST_ICON_ACHIEVEMENT:-🌈 }"
-  GITFLU_MYST_ICON_TEMPERATURE="${GITFLU_MYST_ICON_TEMPERATURE:-☻}"
+  GITSMART_MYST_ICON_ACHIEVEMENT="${GITSMART_MYST_ICON_ACHIEVEMENT:-🌈 }"
+  GITSMART_MYST_ICON_TEMPERATURE="${GITSMART_MYST_ICON_TEMPERATURE:-☻}"
 
   # ∙: digraph `Sb`, Bullet Operator.
-  GITFLU_MYST_SEP="${GITFLU_MYST_SEP:-∙}"
-  GITFLU_MYST_TRIPLE_SEP="$(printf "${GITFLU_MYST_SEP}%.0s" {1..3})"
-  GITFLU_MYST_SEPARATE_REMOTES="${GITFLU_MYST_SEPARATE_REMOTES:-}"
+  GITSMART_MYST_SEP="${GITSMART_MYST_SEP:-∙}"
+  GITSMART_MYST_TRIPLE_SEP="$(printf "${GITSMART_MYST_SEP}%.0s" {1..3})"
+  GITSMART_MYST_SEPARATE_REMOTES="${GITSMART_MYST_SEPARATE_REMOTES:-}"
   # OPTIONAL: If you want to visually separate each of the remote icons, try, e.g.,:
-  #   GITFLU_MYST_SEPARATE_REMOTES="${GITFLU_MYST_SEPARATE_REMOTES:- ${GITFLU_MYST_SEP} }"
+  #   GITSMART_MYST_SEPARATE_REMOTES="${GITSMART_MYST_SEPARATE_REMOTES:- ${GITSMART_MYST_SEP} }"
 
-  GITFLU_MYST_HIDE_AGE=${GITFLU_MYST_HIDE_AGE:-false}
+  GITSMART_MYST_HIDE_AGE=${GITSMART_MYST_HIDE_AGE:-false}
   ! python_get_distribution "human-friendly_pedantic-timedelta" &> /dev/null && \
-    GITFLU_MYST_HIDE_AGE=true
-  # SYNC_ME: If you edit GITFLU_MYST_SINCE_VERSION_TAG, see `minwidth_fancy`, below.
-  GITFLU_MYST_SINCE_VERSION_TAG="${GITFLU_MYST_SINCE_VERSION_TAG:-🏷}"
+    GITSMART_MYST_HIDE_AGE=true
+  # SYNC_ME: If you edit GITSMART_MYST_SINCE_VERSION_TAG, see `minwidth_fancy`, below.
+  GITSMART_MYST_SINCE_VERSION_TAG="${GITSMART_MYST_SINCE_VERSION_TAG:-🏷}"
   # Pneumonic: A ☆ is born! The branch age, since the first commit.
-  GITFLU_MYST_SINCE_INIT_COMMIT="${GITFLU_MYST_SINCE_INIT_COMMIT:-☆}"
+  GITSMART_MYST_SINCE_INIT_COMMIT="${GITSMART_MYST_SINCE_INIT_COMMIT:-☆}"
 
   # landonb/ohmyrepos alignment (set true when running git-my-merge-status
   # against 100s of repos, so that columns align nicely).
-  GITFLU_MYST_ALIGN_COLS=${GITFLU_MYST_ALIGN_COLS:-false}
-  if ${GITFLU_MYST_ALIGN_COLS}; then
-    GITFLU_MYST_ALIGN_NO_MERIT_FILLER="${GITFLU_MYST_ALIGN_NO_MERIT_FILLER:-   }"
+  GITSMART_MYST_ALIGN_COLS=${GITSMART_MYST_ALIGN_COLS:-false}
+  if ${GITSMART_MYST_ALIGN_COLS}; then
+    GITSMART_MYST_ALIGN_NO_MERIT_FILLER="${GITSMART_MYST_ALIGN_NO_MERIT_FILLER:-   }"
   fi
   # The width of the second-to-last branch name (path) is 3 characters,
   # i.e., enough to fit a 'tip/' or 'wip/', or even an alpha-numbered
   # branch, e.g., 'a01/2020-03-10-new-idea', 'a02/2020-03-10', etc.
-  GITFLU_MYST_BR_PART_PENULTIMATE_W=${GITFLU_MYST_BR_PART_PENULTIMATE_W:-3}
+  GITSMART_MYST_BR_PART_PENULTIMATE_W=${GITSMART_MYST_BR_PART_PENULTIMATE_W:-3}
   # The width of the final branch name (path) part is 10 characters,
   # i.e., to fit a YYYY-MM-DD string.
-  GITFLU_MYST_BR_PART_TERMINATING_W=${GITFLU_MYST_BR_PART_TERMINATING_W:-10}
+  GITSMART_MYST_BR_PART_TERMINATING_W=${GITSMART_MYST_BR_PART_TERMINATING_W:-10}
 }
 
 # ***
@@ -486,7 +486,7 @@ git_remote_looks_private () {
   local remote="$1"
   local remurl
   remurl="$(git remote get-url ${remote} 2> /dev/null)" || return 1
-  ! $( echo "${remurl}" | grep -E "${GITFLU_MYST_LOOKS_PUBLIC_REGEX}" > /dev/null )
+  ! $( echo "${remurl}" | grep -E "${GITSMART_MYST_LOOKS_PUBLIC_REGEX}" > /dev/null )
 }
 
 git_remotes_all_private () {
@@ -506,7 +506,7 @@ git_remotes_all_private () {
 branch_tipped () {
   local branch="$1"
   local tip_regex
-  IFS=',' read -a tip_regex <<< "${GITFLU_MYST_TIP_BRANCH_REGEX}"
+  IFS=',' read -a tip_regex <<< "${GITSMART_MYST_TIP_BRANCH_REGEX}"
   local regex=''
   for regex in "${tip_regex[@]}"; do
     [[ ${branch} =~ ${regex} ]] && return 0
@@ -515,12 +515,12 @@ branch_tipped () {
 }
 
 branch_is_local_alpha_or_wip () {
-  local at_branch="${1:-${GITFLU_MYST_AT_BRANCH}}"
+  local at_branch="${1:-${GITSMART_MYST_AT_BRANCH}}"
 
-  [ -z "${GITFLU_MYST_WIP_BRANCH_REGEX}" ] && return 1
+  [ -z "${GITSMART_MYST_WIP_BRANCH_REGEX}" ] && return 1
 
   local wip_greps
-  IFS=',' read -a wip_greps <<< "${GITFLU_MYST_WIP_BRANCH_REGEX}"
+  IFS=',' read -a wip_greps <<< "${GITSMART_MYST_WIP_BRANCH_REGEX}"
   local grepclause
   for grepclause in "${wip_greps[@]}"; do
     ( echo "${at_branch}" | grep -e "${grepclause}" > /dev/null) && return 0
@@ -532,10 +532,10 @@ branch_is_local_alpha_or_wip () {
 # ***
 
 branch_ancestor () {
-  local at_branch="${1:-${GITFLU_MYST_AT_BRANCH}}"
+  local at_branch="${1:-${GITSMART_MYST_AT_BRANCH}}"
   local up_branch=''
   local it_branch
-  for it_branch in ${GITFLU_MYST_BRANCH_HIERARCHY}; do
+  for it_branch in ${GITSMART_MYST_BRANCH_HIERARCHY}; do
     [ "${at_branch}" = "${it_branch}" ] && break
     up_branch="${it_branch}"
   done
@@ -550,7 +550,7 @@ branch_ancestor () {
 # branch and do not care that it's not synced with, say, 'master').
 no_up_branch_chores () {
   local project_root="$(git rev-parse --show-toplevel)"
-  local exclude_file="$(command -v "${GITFLU_MYST_NOCHORES_FILE}")"
+  local exclude_file="$(command -v "${GITSMART_MYST_NOCHORES_FILE}")"
   ( [ -z "${exclude_file}" ] || [ ! -s ${exclude_file} ] ) && return 1
   local line
   while IFS= read -r line; do
@@ -569,9 +569,9 @@ warn_up_not_ancestor () {
   # Only warn if a conventional branch, i.e., not a feature or WIP
   # branch, or something private where we don't care if user rebases.
   local it_matters=false
-  local at_branch="${GITFLU_MYST_AT_BRANCH}"
+  local at_branch="${GITSMART_MYST_AT_BRANCH}"
   local it_branch
-  for it_branch in ${GITFLU_MYST_BRANCH_HIERARCHY}; do
+  for it_branch in ${GITSMART_MYST_BRANCH_HIERARCHY}; do
     [ "${at_branch}" = "${it_branch}" ] && it_matters=true && break
   done
   ! ${it_matters} && return
@@ -603,30 +603,30 @@ git_last_version_tag_icon () {
   commit_tags="$(git --no-pager tag --points-at HEAD)"
   if [ -z "${commit_tags}" ]; then
     # The latest version tag is on an older commit (than HEAD).
-    echo -n "${GITFLU_MYST_SINCE_VERSION_TAG} "
+    echo -n "${GITSMART_MYST_SINCE_VERSION_TAG} "
   else
     local version_tags
-    version_tags="$(echo "${commit_tags}" | grep -e "${GITFLU_RE_VERSION_TAG}")"
+    version_tags="$(echo "${commit_tags}" | grep -e "${GITSMART_RE_VERSION_TAG}")"
     if [ "$(echo "${version_tags}" | wc -l)" -eq 0 ]; then
       # Latest commit tagged, but not with a recognizable version string.
-      echo -n "${GITFLU_MYST_SINCE_VERSION_TAG} "
+      echo -n "${GITSMART_MYST_SINCE_VERSION_TAG} "
     elif [ "$(echo "${version_tags}" | wc -l)" -ne 1 ]; then
       # More than 1 version tag found on latest commit!
-      echo -n "$(bg_red)${GITFLU_MYST_SINCE_VERSION_TAG}+$(attr_reset)"
+      echo -n "$(bg_red)${GITSMART_MYST_SINCE_VERSION_TAG}+$(attr_reset)"
     else
       # Perfect! The latest commit is versioned!
-      echo -n "$(bg_jade)${GITFLU_MYST_SINCE_VERSION_TAG} $(attr_reset)"
+      echo -n "$(bg_jade)${GITSMART_MYST_SINCE_VERSION_TAG} $(attr_reset)"
     fi
   fi
 }
 
 git_last_version_age () {
-  ${GITFLU_MYST_HIDE_AGE} && echo ' ' && return 0
+  ${GITSMART_MYST_HIDE_AGE} && echo ' ' && return 0
   # If not tagged, return whitespace padding, so final "WIP" column aligns.
   # - The hardcoded width here accounts for the leading 2 spaces in the final
   #   echo of this function, 1 space for the tag emoji (which, CAVEAT, means
   #   this feature easily breaks (the columns won't necessarily align) if the
-  #   user edits GITFLU_MYST_SINCE_VERSION_TAG!), 2 more spaces, and `XX.X mons.`
+  #   user edits GITSMART_MYST_SINCE_VERSION_TAG!), 2 more spaces, and `XX.X mons.`
   #   is the longest date string (10 chars) we'd see, plus there's 1 space after
   #   → 2+1+2+10+1=16.
   local minwidth_plain=16
@@ -636,7 +636,7 @@ git_last_version_age () {
     # once and exit), but we also truncate the arg value, %.0s, so printf doesn't
     # actually print the number from the list input, but instead just prints the
     # other format string parts (the space we want to repeat) over and over again.
-    if ${GITFLU_MYST_ALIGN_COLS}; then
+    if ${GITSMART_MYST_ALIGN_COLS}; then
       eval "printf ' %.0s' {1..${minwidth_plain}}"
     else
       # Echo 2 spaces, like we'd do before the '🏷', below, so there's
@@ -660,7 +660,7 @@ git_last_version_age () {
   # but we can do better! Show the age of the repository!
   if [ $? -ne 0 ]; then
     tagtime=$(git_since_init_epoch_ts)
-    vtag_icon="${GITFLU_MYST_SINCE_INIT_COMMIT} "
+    vtag_icon="${GITSMART_MYST_SINCE_INIT_COMMIT} "
   fi
   # No need to check $? again. #nofail
   # Determine the time elapsed between the tag (or init commit) and now.
@@ -688,8 +688,8 @@ prepare_part () {
 }
 
 prepare_text_on_branch () {
-  local name="${GITFLU_MYST_AT_BRANCH}"
-  if ${GITFLU_MYST_ALIGN_COLS}; then
+  local name="${GITSMART_MYST_AT_BRANCH}"
+  if ${GITSMART_MYST_ALIGN_COLS}; then
     # This is not the min-max algorithm my professor taught me. First,
     # truncate the string to the desired width, like max() to an int.
     # Then, expand the string to the desired width, like min().
@@ -697,14 +697,14 @@ prepare_text_on_branch () {
     declare -a bparts
     IFS='/' read -a bparts <<< "${name}"
     if [ "${name}" != "${bparts[0]}" ] && [ ${#bparts} -ge 2 ]; then
-      local penultimate="$(prepare_part "${bparts[-2]}" ${GITFLU_MYST_BR_PART_PENULTIMATE_W})"
-      local terminating="$(prepare_part "${bparts[-1]}" ${GITFLU_MYST_BR_PART_TERMINATING_W})"
+      local penultimate="$(prepare_part "${bparts[-2]}" ${GITSMART_MYST_BR_PART_PENULTIMATE_W})"
+      local terminating="$(prepare_part "${bparts[-1]}" ${GITSMART_MYST_BR_PART_TERMINATING_W})"
       name="${penultimate}/${terminating}"
     else
       # MAGIC_NUMBER: Add one for the '/' separator.
       local parts_and_sep_width=$((0 \
-        + GITFLU_MYST_BR_PART_PENULTIMATE_W \
-        + GITFLU_MYST_BR_PART_TERMINATING_W \
+        + GITSMART_MYST_BR_PART_PENULTIMATE_W \
+        + GITSMART_MYST_BR_PART_TERMINATING_W \
         + 1))
       name="$(prepare_part "${name}" ${parts_and_sep_width})"
     fi
@@ -717,10 +717,10 @@ prepare_text_on_branch () {
 
 prepare_icon_public_remotes () {
   # E.g., privy_icon=' 🎁'
-  local privy_icon=" ${GITFLU_MYST_HAS_PUBLIC_REMOTE}"
+  local privy_icon=" ${GITSMART_MYST_HAS_PUBLIC_REMOTE}"
   # E.g., privy_icon=" 🚽"
   git_remotes_all_private && \
-    privy_icon=" ${GITFLU_MYST_ALL_REMOTES_PRIVY}"
+    privy_icon=" ${GITSMART_MYST_ALL_REMOTES_PRIVY}"
   echo -e "${privy_icon}"
 }
 
@@ -762,29 +762,29 @@ CHORE_PULL_DOWN_REMOTE=32
 prepare_icon_synced_inner_self () {
   local syncodes=0
   # E.g., sync_icon=' 🙏 '
-  local at_branch="${GITFLU_MYST_AT_BRANCH}"
-  local up_branch="${GITFLU_MYST_UP_BRANCH}"
-  local sync_icon=" ${GITFLU_MYST_LOCAL_REPO_AGREE} "
+  local at_branch="${GITSMART_MYST_AT_BRANCH}"
+  local up_branch="${GITSMART_MYST_UP_BRANCH}"
+  local sync_icon=" ${GITSMART_MYST_LOCAL_REPO_AGREE} "
   # Whatever branch this is (including 'master', i.e., even branch with no
   # ancestor), always show alert icon if the active branch is not pristine.
   # Or, if there's a local upstream branch, show alert icon if the current
   # branch is ahead of that upstream local; unless current branch is tipped,
   # then show a different icon but don't mean it as an alert, just as info.
   if [ -n "$(git status --porcelain)" ]; then
-    sync_icon="$(icon_alert "${GITFLU_MYST_LOCAL_REPO_MESSY}")"
+    sync_icon="$(icon_alert "${GITSMART_MYST_LOCAL_REPO_MESSY}")"
     let "syncodes |= CHORE_UNTIDY"
   elif [ -n "${up_branch}" ]; then
     if ! git merge-base --is-ancestor HEAD ${up_branch}; then
       if no_up_branch_chores; then
         # The user made a rule to ignore local branch work for this project.
-        sync_icon=" ${GITFLU_MYST_LOCAL_REPO_NOCHR} "
+        sync_icon=" ${GITSMART_MYST_LOCAL_REPO_NOCHR} "
       elif branch_tipped "${at_branch}"; then
         # A "tip" branch has commits rebased on top of master, but the commits
         # are not expected to be merged by the user to local upstream branch.
-        sync_icon=" ${GITFLU_MYST_LOCAL_REPO_TIPBR} "
+        sync_icon=" ${GITSMART_MYST_LOCAL_REPO_TIPBR} "
       else
         # E.g., sync_icon=' 👊 ', but with, e.g., bordered red background.
-        sync_icon="$(icon_alert "${GITFLU_MYST_LOCAL_REPO_AHEAD}")"
+        sync_icon="$(icon_alert "${GITSMART_MYST_LOCAL_REPO_AHEAD}")"
         let "syncodes |= CHORE_MERGE_UP_LOCAL"
       fi
       warn_up_not_ancestor "${up_branch}"
@@ -792,7 +792,7 @@ prepare_icon_synced_inner_self () {
       # Local branch is tidy; there exists a progenitor branch;
       # and the progenitor branch is ahead of this branch.
       # - Defaults to sailboat, ⛵, i.e., remote branch has sailed away.
-      sync_icon=" ${GITFLU_MYST_PROGENITOR_AHEAD} "
+      sync_icon=" ${GITSMART_MYST_PROGENITOR_AHEAD} "
       let "syncodes |= CHORE_PULL_DOWN_LOCAL"
     fi
   fi
@@ -815,7 +815,7 @@ fill_placeholder () {
   # MAGIC_NUMBER(_of_spaces): space + 2-char-unicode + space = 4
   #                                                        1234
   #                                                        vvvv
-  br_icons="$(eval "printf '${GITFLU_MYST_SEPARATE_REMOTES}    %.0s' {1..${n_times}}")"
+  br_icons="$(eval "printf '${GITSMART_MYST_SEPARATE_REMOTES}    %.0s' {1..${n_times}}")"
   echo -e "${br_icons}"
 }
 
@@ -829,9 +829,9 @@ fill_placeholder () {
 remote_wip_icon () {
   local remote_branch_absent="$1"
   if ${remote_branch_absent}; then
-    echo -e " ${GITFLU_MYST_WIP_REMOTE_ABSENT} "
+    echo -e " ${GITSMART_MYST_WIP_REMOTE_ABSENT} "
   else
-    echo -e " ${GITFLU_MYST_WIP_REMOTE_EXISTS} "
+    echo -e " ${GITSMART_MYST_WIP_REMOTE_EXISTS} "
   fi
 }
 
@@ -843,7 +843,7 @@ prepare_icon_synced_remote () {
   local iconxx="$3"
   local diffco="$4"
   local syncodes=0
-  local at_branch="${GITFLU_MYST_AT_BRANCH}"
+  local at_branch="${GITSMART_MYST_AT_BRANCH}"
   local sync_icon=" ${iconok} "
   local remote_branch_absent=false
 
@@ -878,7 +878,7 @@ prepare_icon_synced_remote () {
     #   if [ "${diffco}" != "HEAD" ] && branch_tipped "${at_branch}"; then
     # but the following instead (which works when, say, there is no 'origin',
     # and ${diffco} is still 'HEAD' for multiple calls to this function):
-    if [ "${remote}" != "${GITFLU_MYST_REMOTE_HIERARCHY[0]}" ] \
+    if [ "${remote}" != "${GITSMART_MYST_REMOTE_HIERARCHY[0]}" ] \
        && branch_tipped "${at_branch}"; \
     then
       # Local branch is tipped, e.g., tip/2020-03-09-abcd1234, and the
@@ -886,13 +886,13 @@ prepare_icon_synced_remote () {
       if ${remote_branch_absent}; then
         # Preferable: this tipped branch may have been pushed to (e.g., my) 'origin',
         # but it has not been pushed to upstream (i.e., some organization's) 'upstream'.
-        sync_icon=" ${GITFLU_MYST_TIP_UPSTREAM_ABSENT} "
+        sync_icon=" ${GITSMART_MYST_TIP_UPSTREAM_ABSENT} "
       else
-        # The branch exists in a secondary or lesser remote (per GITFLU_MYST_REMOTE_HIERARCHY
+        # The branch exists in a secondary or lesser remote (per GITSMART_MYST_REMOTE_HIERARCHY
         # order), e.g., branch is 'upstream'; and it's behind the local branch.
         # - (lb): This is not part of my workflow, so showing different, but not doing
         # anything else; this use case is unlikely/not expected given how I work(flow).
-        sync_icon=" ${GITFLU_MYST_TIP_UPSTREAM_EXISTS} "
+        sync_icon=" ${GITSMART_MYST_TIP_UPSTREAM_EXISTS} "
       fi
     else
       # Show the alert icon to tell user they probably want to push their branch to
@@ -907,7 +907,7 @@ prepare_icon_synced_remote () {
   elif ! git merge-base --is-ancestor refs/remotes/${remote}/${at_branch} ${diffco} \
   2> /dev/null; then
     # The remote/branch is ahead of this remote/branch. ⛵ Come Sail Away.
-    sync_icon=" ${GITFLU_MYST_PROGENITOR_AHEAD} "
+    sync_icon=" ${GITSMART_MYST_PROGENITOR_AHEAD} "
     let "syncodes |= CHORE_PULL_DOWN_REMOTE"
   fi
 
@@ -924,7 +924,7 @@ prepare_icons_remotes () {
 
   # For each loop, compare the remote/branch against the previous remote/branch.
   # For the first time through, compare against $(git_branch_name) aka 'HEAD'.
-  local currbr="${GITFLU_MYST_AT_BRANCH}"
+  local currbr="${GITSMART_MYST_AT_BRANCH}"
   local diffco="HEAD"
 
   # Loop over the (branch, icon, icon) triplets.
@@ -934,7 +934,7 @@ prepare_icons_remotes () {
     local iconxx="$3"
 
     if [ -z "${remote}" ] || [ -z "${iconok}" ] || [ -z "${iconxx}" ]; then
-      >&2 echo "ERROR: GITFLU_MYST_REMOTE_HIERARCHY malformed!"
+      >&2 echo "ERROR: GITSMART_MYST_REMOTE_HIERARCHY malformed!"
       exit 1
     fi
 
@@ -947,14 +947,14 @@ prepare_icons_remotes () {
     if git_remote_exists "${remote}"; then
       re_icon="$(prepare_icon_synced_remote "${remote}" "${iconok}" "${iconxx}" "${diffco}")"
       let "syncodes |= $?"
-    elif ${GITFLU_MYST_ALIGN_COLS}; then
+    elif ${GITSMART_MYST_ALIGN_COLS}; then
       # MAGIC_NUMBER: 4: Leading and trailing spaces, and two-column unicode character.
       re_icon="$(fill_placeholder "1")"
     else
       re_icon=''
     fi
     if [ -n "${re_icon}" ]; then
-      re_icons="${re_icons}${GITFLU_MYST_SEPARATE_REMOTES}${re_icon}"
+      re_icons="${re_icons}${GITSMART_MYST_SEPARATE_REMOTES}${re_icon}"
     fi
     # Only change diffco (previous reference branch) if it exists.
     if git_remote_branch_exists "${remote}" "${currbr}"; then
@@ -989,15 +989,15 @@ prepare_icons_rebasing () {
   # Echoes one icon for every WIP or SQ commit between branch and upbranch.
 
   # If no up-branch (i.e., on 'master'), do nothing.
-  local up_branch="${GITFLU_MYST_UP_BRANCH}"
+  local up_branch="${GITSMART_MYST_UP_BRANCH}"
   [ -z "${up_branch}" ] && return
 
   # If no greps, do nothing,
-  [ -z "${GITFLU_MYST_WIP_COMMIT_REGEX}" ] && return 0
+  [ -z "${GITSMART_MYST_WIP_COMMIT_REGEX}" ] && return 0
 
   # Prepare the git-log "--grep" components.
   local wip_greps
-  IFS=',' read -a wip_greps <<< "${GITFLU_MYST_WIP_COMMIT_REGEX}"
+  IFS=',' read -a wip_greps <<< "${GITSMART_MYST_WIP_COMMIT_REGEX}"
   local greps=''
   local grepclause
   for grepclause in "${wip_greps[@]}"; do
@@ -1021,14 +1021,14 @@ prepare_icons_rebasing () {
 
   [ ${wip_cnt} -eq 0 ] && return 0
 
-  local wip_icon="${GITFLU_MYST_WIP_COMMIT_FOUND}"
+  local wip_icon="${GITSMART_MYST_WIP_COMMIT_FOUND}"
 
   # - We could prints 1 emoji for each WIP counted
   #   e.g., 5 WIP commits would print:
   #     🏭 🏭 🏭 🏭 🏭
   #   - except it causes long lines and line breaks and doesn't help us align columns.
   # So we'll do so if not caring about column alignment.
-  if ${GITFLU_MYST_ALIGN_COLS}; then
+  if ${GITSMART_MYST_ALIGN_COLS}; then
     # Show an abbreviated WIP report (that's less likely to be be very wide)
     # for the myrepos all-repos status report.
     eval "printf '${wip_icon}×%d' ${wip_cnt}"
@@ -1052,11 +1052,11 @@ prepare_icon_meritorious () {
   if [ ${syncodes} -eq 0 ]; then
     # E.g., icon="🛡", or "🌈", or whatever is set,
     # followed by a green face ☻ to indicate green.
-    pt_badge="${GITFLU_MYST_ICON_ACHIEVEMENT}"
-    pt_badge="${pt_badge}$(fg_lightgreen)${GITFLU_MYST_ICON_TEMPERATURE}"
+    pt_badge="${GITSMART_MYST_ICON_ACHIEVEMENT}"
+    pt_badge="${pt_badge}$(fg_lightgreen)${GITSMART_MYST_ICON_TEMPERATURE}"
   else
     # For multiple-repo reporting, show spaces instead of rainbow shield.
-    local no_badge="${GITFLU_MYST_ALIGN_NO_MERIT_FILLER}"
+    local no_badge="${GITSMART_MYST_ALIGN_NO_MERIT_FILLER}"
     # Show a more mild alert if a WIP branch and the only
     # issue is that it needs to be merged to its progenitor.
     # - Award the user somewhat -- they should merge their
@@ -1081,16 +1081,16 @@ prepare_icon_meritorious () {
       # Light blue: Easy chores: `merge --ff-only` and `push` work, should be easy.
       tempcolor="$(fg_lightblue)"
     fi
-    pt_badge="${no_badge}${tempcolor}${GITFLU_MYST_ICON_TEMPERATURE}"
+    pt_badge="${no_badge}${tempcolor}${GITSMART_MYST_ICON_TEMPERATURE}"
   fi
   pt_badge="${pt_badge}$(attr_reset)"
 
-  local tripsep="${GITFLU_MYST_TRIPLE_SEP}"
+  local tripsep="${GITSMART_MYST_TRIPLE_SEP}"
 
   [ -n "${pt_sqwipes}" ] && pt_sqwipes=" ${pt_sqwipes}"
 
   local commendation=" ${tripsep}"
-  ! ${GITFLU_MYST_ALIGN_COLS} && \
+  ! ${GITSMART_MYST_ALIGN_COLS} && \
     commendation="${commendation}${pt_sqwipes}"
   commendation="${commendation} ${pt_badge}"
 
@@ -1103,8 +1103,8 @@ prepare_extra_wip_reminder () {
   local wip_cnt="$1"
   local pt_sqwipes="$2"
   [ ${wip_cnt} -eq 0 ] && return
-  local reminder="${GITFLU_MYST_WIP_REMINDER}"
-  ${GITFLU_MYST_ALIGN_COLS} && \
+  local reminder="${GITSMART_MYST_WIP_REMINDER}"
+  ${GITSMART_MYST_ALIGN_COLS} && \
     reminder=" ${reminder}:${pt_sqwipes}$(attr_reset)"
   echo -e "${reminder}$(attr_reset)"
 }
@@ -1112,13 +1112,13 @@ prepare_extra_wip_reminder () {
 # ***
 
 prepare_branch_report () {
-  GITFLU_MYST_AT_BRANCH="$(git_branch_name)"
+  GITSMART_MYST_AT_BRANCH="$(git_branch_name)"
 
-  GITFLU_MYST_UP_BRANCH="$(branch_ancestor "${GITFLU_MYST_AT_BRANCH}")"
-  while [ -n "${GITFLU_MYST_UP_BRANCH}" ] \
-        && ! git_branch_exists "${GITFLU_MYST_UP_BRANCH}" \
+  GITSMART_MYST_UP_BRANCH="$(branch_ancestor "${GITSMART_MYST_AT_BRANCH}")"
+  while [ -n "${GITSMART_MYST_UP_BRANCH}" ] \
+        && ! git_branch_exists "${GITSMART_MYST_UP_BRANCH}" \
   ; do
-    GITFLU_MYST_UP_BRANCH="$(branch_ancestor "${GITFLU_MYST_UP_BRANCH}")"
+    GITSMART_MYST_UP_BRANCH="$(branch_ancestor "${GITSMART_MYST_UP_BRANCH}")"
   done
 
   local pt_local
@@ -1140,7 +1140,7 @@ prepare_branch_report () {
   local pt_vrage="$(git_last_version_age)"
   local pt_rewip="$(prepare_extra_wip_reminder "${wip_cnt}" "${pt_sqwipes}")"
 
-  echo -e "${pt_local}${pt_privy} ${GITFLU_MYST_SEP} ${pt_merge}${pt_merit}${pt_vrage}${pt_rewip}"
+  echo -e "${pt_local}${pt_privy} ${GITSMART_MYST_SEP} ${pt_merge}${pt_merit}${pt_vrage}${pt_rewip}"
 }
 
 # ***
@@ -1148,7 +1148,7 @@ prepare_branch_report () {
 echo_branch_report () {
   # Set default args, unless user passed.
   [ "${#}" -eq 0 ] && \
-    set -- ${GITFLU_MYST_REMOTE_HIERARCHY}
+    set -- ${GITSMART_MYST_REMOTE_HIERARCHY}
   prepare_branch_report "${@}"
 }
 
