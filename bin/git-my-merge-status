@@ -9,13 +9,13 @@
 
 # USAGE: Run directly, or put on PATH and wire as alias.
 #
-#        - E.g., to set a git alias
+#        - To set a git alias, run, e.g.:
 #
 #           $ git config --global alias.st '! git-my-merge-status'
 #
-#        - E.g., to set a Bash alias:
+#        - To set a Bash alias, run, e.g.:
 #
-#           $ alias gs="git-my-merge-status"
+#           $ alias st="git-my-merge-status"
 
 # YOU: Run as-is, or customize to you liking via environs,
 #      or by copy-pasting `my_merge_status_config`, below, to
@@ -23,8 +23,8 @@
 
 # DEPENDENCIES: None, but some optional.
 #
-# - If you'd like to see how old version tags are, you'll need a python
-#   package published by the same author who wrote this script:
+# - If you'd like the output to show how old version tags are, install
+#   a Python package published by the same author who wrote this script:
 #
 #     pip3 install human-friendly_pedantic-timedelta
 
@@ -39,81 +39,227 @@
 # CONCEPTS:
 #
 # In addition to letting you know if there's work to do in the working
-# tree, my-merge-status indicates if there's *workflow*-related work to
-# do, such as needing to pull changes from a remote, or needing to merge
-# a feature branch up to a 'develop' or 'master' branch.
+# tree, such as if there are uncommitted files, my-merge-status also
+# indicates if there's *workflow*-related work to do, such as needing
+# to pull changes from a remote, or needing to merge a feature branch
+# into a main development branch, or needing to push changes to a remote.
 #
-# For this discussion to make sense, and to not confuse you, dear reader,
-# I avoid the term "upstream".
+# As such, we'll need to clarify what we call each branch and each remote,
+# and we'll need to define what purpose they each serve.
 #
-# - In a general sense, "upstream" can mean any remote where you push
-#   changes. For instance, my GitHub repository is "upstream" of the
-#   local working tree on my laptop.
+# REMOTE NAMES AND TERMS:
 #
-#   But in a more specific sense, "upstream" is often meant to refer to
-#   the main project repository, i.e., the URL of the project which maybe
-#   you forked is called the 'upstream' remote in many online examples.
-#   (But unlike 'origin', which Git uses by default when you clone a repo,
-#   I'm not aware that 'upstream' is codified anywhere; it's just part of
-#   the vernacular.)
+# - "RELEASE" REMOTE (the main project remote, sometimes called "upstream"):
 #
-# So for this discussion, keep the concept of an "upstream" in mind, but
-# consider that I'll use these two terms to clarify what's being discussed:
+#   The `git clone` command uses "origin" as the default remote name,
+#   and users often clone their project fork first (without specifying
+#   an alternative name with the `-o` option) before adding another
+#   remote to point to the main project repository. So, generally, the
+#   "origin" remote points to the user's fork. Then, when the user adds
+#   a remote to the main project, they choose a different remote name,
+#   and oftentimes that name is "upstream" (or at least that's the name
+#   I often see used in examples online).
 #
-# - Progenitor: I use the term *progenitor*, defined as "an ancestor or parent",
-#   to refer to the branch upstream (see?) of the current branch, where the user
-#   is likely to want to merge changes.
+#   But, in a general sense, "upstream" can mean any remote where you push
+#   changes. For instance, my GitHub repository (or any remote, for that
+#   matter) is "upstream" of the local working tree on my machine. The term
+#   might also be used to refer to a branch relationship, e.g., a "release"
+#   branch might be considered *upstream* of a "development" branch, because
+#   code flows *up* from the development branch into the release branch.
+#
+#   However, unlike "origin", which Git uses by default when you clone but
+#   don't specify a remote name, the term "upstream" is not not codified
+#   anywhere; it's just part of the vernacular. It's what the community
+#   has come to name the remote that points to the main project repository.
+#
+#   As such, because "upstream" is used in different contexts and may have
+#   different meanings, to avoid confusion, we'll call the main project
+#   remote the "release" remote. This should ensure you have a clear idea
+#   what we're talking about -- the "release" remote is the main project
+#   repository.
+#
+# - "PROVING" REMOTE (your forked project remote, sometimes called "origin"):
+#
+#   Because Git defaults to using the name "origin" to label the remote
+#   when you run the `git clone` command, and because people often clone
+#   their own repository first (and then run `git remote add` to attach
+#   the main project remote), we could use the name "origin" to refer to
+#   the remote that the user owns and controls.
+#
+#   However, as with the "release" remote, to avoid ambiguity, we'll call
+#   the forked project remote the "proving" remote, as in, you're proving
+#   that your code works before you submit it to the release repository.
+#
+#   This way -- using two unique, precise terms, "proving" and "release" --
+#   there should be no confusion as to which remote refers to what. The
+#   "proving" remote refers to your fork, and the "release" remote refers
+#   to the main project.
+#
+# - CUSTOM/ALTERNATIVE REMOTE NAMES:
+#
+#   If you'd like to use remote names other than those defined here, copy
+#   the environment variable found below, GITSMART_MYST_REMOTE_HIERARCHY,
+#   to a wrapper script that you call before you call this script, and
+#   insert your preferred names as appropriate (or just edit the variable
+#   below in your own copy of this script).
+#
+# - WHY "PROVING" and "RELEASE"?
+#
+#   The author finds the terms "origin" and "upstream" to be ambiguous,
+#   and despite their widespread use, there's no consensus on their use.
+#   So I find it safer to use more precise terms that are not commonly
+#   used, which avoids the risk of confusing some users.
+#
+#   I like to think of the main project remote as the "release" remote,
+#   and my GitHub user's fork of the project as the "proving" remote.
+#   The term "release" is pretty obvious -- whatever code you're working
+#   on is published from one source, and that's the "release". As for
+#   "proving", this could just as well be "testing" or "development",
+#   but by using "proving", we've chosen a word not normally used, so
+#   there will be less confusion about what it means. This is the remote
+#   where you prove that your code works, and after you've proven that,
+#   then you can submit it to the main project for release.
+#
+#   As a bonus, these two words have the same number of letters, and,
+#   when alphabetized, the main project remote is listed last, so a call
+#   to `git remote -v` will list them in the logical order of how the code
+#   flows (first to the "proving" remote, and then to the "release" remote);
+#   and as a bonus, because the two names are the same width, the output is
+#   more visually pleasant. E.g.,
+#
+#     $ git remote -v | grep push
+#     proving git@github.com:my-user/some-project.git (push)
+#     release git@github.com:the-org/some-project.git (push)
+#
+#   - (While it's being discussed, I may as well plug a better git-remote
+#      formatter -- see the `git re` command in my git-smart project:
+#
+#        https://github.com/landonb/git-smart/blob/release/bin/git-re
+#
+#      The `git re` command only lists each remote once (unlike git-remote);
+#      it orders the remotes based on the direction code flows (from remotes
+#      listed first to remotes listed later); and it right-aligns the remote
+#      names for prettier output.)
+#
+# BRANCH NAMES AND TERMS:
+#
+# - "PROGENITOR" TERM:
+#
+#   I use the term *progenitor*, defined as "an ancestor or parent", to refer
+#   to the branch upstream [see the ambiguity of this term?] of the current
+#   branch, where you are likely to want to merge changes.
+#
+#   (Note that "upstream" in the previous sentence refers to a branch, and
+#   not a remote. So you see how "upstream" on its own is ambiguous -- it
+#   might be used to refer to a remote, or it might be used to refer to a
+#   branch. But I won't use "upstream" again except to refer to a remote.
+#   So we'll talk about a remote as being upstream of another remote, and
+#   we'll talk about a branch as being the progenitor of another branch.)
 #
 #   For instance, when I'm finished with a feature branch, I'll merge it to
-#   the 'develop' branch. And every so often, I'll merge 'develop' to the
-#   'master' branch.
+#   the main development branch. And every so often, I'll merge that main
+#   development branch to a release branch.
 #
-#   In this example, the feature branch's progenitor is 'develop', and the
-#   'develop' branch's progenitor is 'master'.
+#   - So the development branch is a progenitor of the feature branch, and
+#     the release branch is a progenitor of both the development branch and
+#     any feature branch.
 #
-#   This is a pretty obvious workflow to most people, but I'm not sure this
-#   particular relationship between branches has been given a clarifying name
-#   before. (That is, I've called it the *upstream branch* in the past, but
-#   one might confuse that with the branch on the 'upstream' remote!)
+# - "PROVING" BRANCH (the main development branch, often called "main"):
 #
-#   - You might envision the progenitor branch hierarchy as
-#     'master' <- 'develop' <- feature branches.
+#   What you name the various branches in a project is up to you. Many
+#   people use the default name assigned by the Git tool as the name of
+#   the main development branch, but this name, "master", is offensive.
+#   The term is not meant in the "master copy" sense, but (if you look
+#   at the history of Git itself) is a direct reference to the vulgar
+#   and insensitive "master-slave" terminology adopted by early computer
+#   scientists to describe a primary system and its associated replicas [1].
 #
-# - Remote Branch: The meaning of *remote branch* should be obvious, but I
-#   wanted to highlight that rather than say "upstream branch", I'll say
-#   "remote branch" to refer to the same-named branch on a remote repo.
+#   [1] Here's the first reference to 'master' in Git, from May 24, 2005:
+#     https://github.com/git/git/commit/3e91311ae750af9bf2e3517b1e701288ac3066b9
+#   The term was adopted from BitKeeper, e.g., this document from Feb 2, 2001:
+#     https://github.com/bitkeeper-scm/bitkeeper/blob/master/doc/HOWTO.ask#L223
+#   If you'd like to read more about the Git origin story, see here:
+#     https://www.linuxjournal.com/content/git-origin-story
 #
-#   - You might envision the remote branch hierarchy as
-#     'upstream' <- 'origin' <- local repo.
+#   (As for why do I mention all this? As another person writes, and I totally
+#    agree, "Language matters, but we often get used to saying things that
+#    normalize harm. Certain phrases diminish or denigrate groups of people,
+#    and if not addressed, these phrases become so commonplace that those
+#    using them do not even consider their origins and effects."
+#    - From "We need to stop saying ‘Ole Miss’" by Zach Borenstein.
+#      https://thedmonline.com/opinion-we-need-to-stop-saying-ole-miss/
+#   )
+#
+#   Git's default branch name is also imprecise because it does not tell you
+#   what purpose the branch serves (is it a development branch, or is it a
+#   release branch, or what?). But really we shouldn't use the term because
+#   it's disgusting and offensive. So let's choose a different name.
+#
+#   For the sake of consistency, we'll call the main development branch
+#   "proving", just as we call the forked project remote "proving". It's
+#   where code goes first before going to "release".
+#
+#   (As an alternative, we could use another term that the community has
+#   used in the past, such as "main", "trunk", "baseline", or "mainline".
+#   But I find it easier to use the same two terms for branches as for
+#   remotes. Then we can think of code flowing similarly, from proving to
+#   release. We also avoid having four different names for essentially two
+#   concepts, that of a place to prove your code works, and that of a place
+#   from which to release your code. We've also picked two obvious names,
+#   each of which on its own should be easy to understand, and each of
+#   which is precise and unique enough to not be conflated with other
+#   concepts.)
+#
+# - "RELEASE" BRANCH:
+#
+#   Every so often you'll merge the main body of work into a release branch,
+#   that you'll then version and release. We'll call this branch -- no
+#   surprise here -- the "release" branch.
+#
+# - CUSTOM/ALTERNATIVE BRANCH NAMES:
+#
+#   Just like with the remote names, you're free to choose your own branch
+#   name scheme.
+#
+#   Look below for the GITSMART_MYST_REMOTE_HIERARCHY environment variable,
+#   and either edit as appropriate, or copy to a wrapper script and edit.
+#
+# BRANCH AND REMOTE HIERARCHIES:
+#
+# - You might envision the progenitor branch hierarchy as
+#   'release' <- 'proving' <- feature branches.
+#
+# - You might envision the remote repository hierarchy as
+#   'release' <- 'proving' <- local repository.
 #
 # WORKFLOW:
 #
-# Your basic Forking Workflow, but with some specially-named branches
-# for additional functionality I've found useful.
+# The code assumes a basic Forking Workflow, but with some specially-named
+# branches for additional functionality I've found useful.
 #
 # Remotes:
 # - If you've forked or cloned someone else's project, assign that URL
-#   to the 'upstream' remote.
+#   to the 'release' remote.
 # - If you've forked a project, or if it's your personal project,
-#   assign that URL to the 'origin' remote.
+#   assign that URL to the 'proving' remote.
 #   - If you didn't fork the project and it's not yours, do not use
-#     a remote named 'origin'.
+#     a remote named 'proving'.
 # - All other remotes are ignored.
 #
 # Branches:
 # - Work flows from feature branches (named whatever you want) to the
-#   'develop' branch, and from 'develop' to 'master'.
+#   'proving' branch, and from 'proving' to 'release'.
 # - Use alpha or WIP (work in progress) branch naming to indicate that
 #   a branch is not meant to be pushed to the remotes. The regex for
 #   alpha/WIP branches is user-configurable but defaults to the prefixes "wip/"
 #   and "a[0-9][0-9]/", e.g., "wip/testing-some-hack", or "a01/2020-03-13".
 # - Use TIP (off the tip) branch naming to indicate that a branch is
 #   allowed to be ahead of the remote branch (which is useful if you're
-#   hacking on a fork but don't want to submit a pull request yet).
-#   A TIP branch starts with the prefix "tip/".
+#   hacking on a fork but don't want to submit a pull request yet (or if
+#   you never intend to)). A TIP branch starts with the prefix "tip/".
 # - If you cannot name a branch specially and want to have it ignored by
-#   this script (i.e., so you aren't needled to merge changes to 'develop',
-#   because you checked out a pinned branch), you can added rules to the
+#   this script (i.e., so you aren't needled to merge changes to 'proving',
+#   because you checked out a pinned branch), you can add rules to the
 #   ignore file (defined by GITSMART_MYST_NOCHORES_FILE).
 #
 # SYMBOLOGY:
@@ -125,13 +271,13 @@
 #    🎁  a public repository, i.e., there's at least one .com|.org|.etc remote.
 # - [👇] active branch is not tidy: has working tree changes, or untracked files.
 #   [👊] active branch needs work: ahead of local ancestor, or has WIP or squash! commits;
-#    🙏  active branch is pristine: at same commit as ancenstor, and no WIP/squash commits.
-#    🍬  active branch is a TIP branch, deliberately ahead of progenitor and 'upstream'.
+#    🙏  active branch is pristine: at same commit as ancestor, and no WIP/squash commits.
+#    🍬  active branch is a TIP branch, deliberately ahead of progenitor branch and 'release' remote.
 #    🙈  chores are ignored per rule in GITSMART_MYST_NOCHORES_FILE (except tidiness).
-# - [👆] active branch not pushed to 'origin' remote -- not shown for WIP branches.
-#    👍  active branch same commit as 'origin', e.g., refs/remotes/origin/<branch>.
-# - [⚡] active branch not pushed to 'upstream' remote -- not shown for WIP or TIP branches.
-#    🌩  active branch same commit as 'upstream', e.g., refs/remotes/upstream/<branch>.
+# - [👆] active branch not pushed your 'proving' remote -- not shown for WIP branches.
+#    👍  active branch at same commit as matching branch in 'proving' remote, e.g., refs/remotes/proving/<branch>.
+# - [⚡] active branch not pushed to 'release' remote -- not shown for WIP or TIP branches.
+#    🌩  active branch same commit as 'release' remote, e.g., refs/remotes/release/<branch>.
 # -  ⛵  remote branch is ahead of local branch; user may want to fetch/pull changes.
 #    🤷  for WIP branch, printed for each remote, because not expecting user to push.
 #    ❗  for WIP, printed if the branch exists on the remote, which is unexpected.
@@ -152,10 +298,10 @@
 # TYPES OF BRANCHES (AND HOW THEY'RE NAMED):
 #
 # All branches are optional, but each project might have any of the following:
-# - A 'master' branch, which merges to no branch.
-# - A 'develop' branch, which merges to 'master'.
+# - A 'release' branch, which merges to no branch.
+# - A 'proving' branch, which merges to 'release'.
 # - Zero or more work-in-progress branches, aka WIP branches,
-#   which eventually merge to 'develop' (if it exists) or 'master',
+#   which eventually merge to 'proving' (if it exists) or 'release',
 #   but probably after being rebased.
 #   - A WIP branch is named with a prefix followed by the date.
 #     The prefix is either 'wip/' or the letter 'a' (as in 'alpha')
@@ -163,7 +309,7 @@
 #     'wip/2020-03-10', or 'a01/2020-03-10' or 'a02/2020-03-10', etc.
 #   - A WIP branch is generally not shared with other developers.
 #     - I use WIP when I'm hacking on something that I plan to rebase
-#       completely later (and then I'll either merge to, say, 'develop',
+#       completely later (and then I'll either merge to, say, 'proving',
 #       and push that to the remote, or I'll create a properly-named
 #       branch and push that).
 #     - The WIP branch naming convention could be used to tell other
@@ -171,14 +317,14 @@
 #       you should not push a WIP branch to a shared remote (like GitHub)
 #       -- it feels like dirty underwear to me, so I like to keep it secret
 #       -- so the my-merge-status tool will not check that a WIP branch has
-#       been pushed to the 'origin' remote, like it does for other branches.
+#       been pushed to the 'proving' remote, like it does for other branches.
 #       - If you are worried about backing up your work because you are
 #         not pushing WIP branches to GitHub, consider using myrepos to
 #         sync your work to a USB device or to another host when you want.
 #     - In addition to using WIP branches for privately hacking without
-#       judgement by others, I have a ``git wip`` alias that's useful
+#       judgement by others, I have a `git wip` alias that's useful
 #       when I get interrupted and I want to capture my work -- it commits
-#       all changes and any files. Later, I'll ``git rollback``, clean up
+#       all changes and any new files. Later, I'll `git rollback`, clean up
 #       my work, and then make different commits. (For example, if I need
 #       to physically leave my place and I've been working on my desktop
 #       machine, I'll quickly git-wip my work, sync all my repos to a laptop,
@@ -203,8 +349,7 @@
 #   "attach to or cover the end or extremity of", as in, "mountains tipped
 #   with snow"), which are used to fork-and-extend repositories where you
 #   do not plan to submit changes upstream (e.g., you want to add an .ignore
-#   to a project, but you do nt want to bother asking project maintainers to
-#   add one).
+#   to a project, but you don't want to bother project maintainers with a PR).
 #   - Use the same naming convention as WIP branches, but the date should
 #     reflect the date of the latest upstream commit that your work descends
 #     from. I also like to add the eight-digit hash.
@@ -221,11 +366,11 @@
 #   - Because feature branches are meant to be shared, my-merge-status will
 #     notify you if the latest local feature branch commit has not been pushed
 #     to the remote (e.g., if you have not yet pushed the latest commits to
-#     'origin').
+#     the 'proving' remote).
 #   - my-merge-status will also notify you if the feature branch has not
-#     yet been merged to the *progenitor* branch (which is the 'develop'
-#     branch if it exists, or 'master' (or however GITSMART_MYST_BRANCH_HIERARCHY
-#     is configured)).
+#     yet been merged to the *progenitor* branch (which is the 'proving'
+#     branch if it exists, or 'release' branch (or whatever branch is
+#     indicated by GITSMART_MYST_BRANCH_HIERARCHY)).
 #   - So that a multiple-project my-merge-status shows the most relevant branch
 #     name snippet (because the branch name space is limited), use the same
 #     naming convention as used for WIP and TIP branches.
@@ -247,9 +392,9 @@
 # - Zero or more other branches, not named like or adhering to any previously
 #   mentioned branch type.
 #   - By default, my-merge-status assumes you'll want to eventually merge
-#     these branches to 'develop' or 'master' (i.e., the *progenitor* branch).
-#     So my-merge-status will alert you when these branches are ahead of (or
-#     behind) the progenitor branch.
+#     these branches to the 'proving' or 'release' branch (i.e., to the
+#     *progenitor* branch). So my-merge-status will alert you when these
+#     branches are ahead of (or behind) the progenitor branch.
 #     - If you want to tell my-merge-status to not check progenitor tidiness
 #       on a repository, add the path to the repository to the file indicated
 #       by GITSMART_MYST_NOCHORES_FILE (which is expected to be found
@@ -259,32 +404,36 @@
 #
 # Consider setting the default branch on GitHub to help other users interpret
 # your work.
-# - The default branch on GitHub should be 'develop' if such a branch exists.
-# - If you're not using a 'develop' branch, stick with 'master' as the default.
-# - But if the project is tipped, delete the 'master' branch both locally and
-#   from the 'origin' remote, and set the GitHub default branch to the tipped
+# - The default branch on GitHub should be 'proving' if such a branch exists,
+#   rather than 'release', so that someone who clones your repository gets
+#   your latest work, and so that a Pull Request submitted to you defaults
+#   to that branch as well.
+# - If you're not using a 'proving' branch, stick with 'release' as the default.
+# - But if the project is tipped, delete the 'release' branch both locally and
+#   from the 'proving' remote, and set the GitHub default branch to the tipped
 #   branch. This should give visitors to your GitHub page a better understanding
 #   how you're using the forked project.
-#   - Note that occasionally you'll want to fetch changes from the 'upstream'
+#   - Note that occasionally you'll want to fetch changes from the 'release'
 #     remote. When changes are found, create a new TIP branch named as indicated
-#     previously, rebase your work, push to the 'origin' remote, and then log on
-#     GitHub and update the default branch. (Perhaps someday I'll automate this
-#     step using a GitHub CLI tool.)
+#     previously, rebase your work, push to your 'proving' remote, and then log on
+#     GitHub and update the default branch. (MEH: Perhaps someday I'll automate
+#     this step using a GitHub CLI tool.)
 #
 # REMOTE REPOSITORY CONVENTIONS:
 #
-# As you have probably figured out by now, there are two remote repositories,
-# 'origin' and 'upstream'.
+# Considering the two conventional remote repositories, 'proving' and 'release':
 # - Neither remote exists for private repositories.
-# - If you've forked a project, the 'origin' remote refers to your GitHub
-#   user's repository, and the 'upstream' remote refers to the repository
-#   that was forked. (This is pretty standard fare for most Git users.)
-# - If you've cloned a project without forking it, the 'origin' remote
-#   most likely refers to the repository that you cloned (because that's
-#   what git-clone does by default). But you're free to use the 'upstream'
-#   remote, if you want (I don't bother).
-# - Name any other remotes as you see fit.
-#   - my-merge-status only makes assumptions about the 'origin' and 'upstream'
+# - If you've forked a project, the 'proving' remote refers to your GitHub
+#   user's repository, and the 'release' remote refers to the repository
+#   that was forked.
+# - If you've cloned a project from another user or organization without
+#   forking it first, the remote is named 'origin' by default. But I'll
+#   often `git clone -o release` instead, so that the remote is called
+#   'release', and so I'm reminded that the code is not my own.
+# - You can name any other remotes as you see fit, e.g., if you are working
+#   with another user and need access to their branches, you might add a
+#   remote named with the same name as that user.
+#   - my-merge-status only makes assumptions about the 'proving' and 'release'
 #     remotes, and it ignores all other remotes.
 #
 # OTHER CONVENTIONS:
@@ -292,7 +441,7 @@
 # To correctly identify private vs. public repos, my-merge-status looks
 # for a .com, .org, or .edu in any remote name; or if a repo starts with "git@"
 # which works for a default SSH URL, e.g., "git@github.com:landonb/git-my-merge-status",
-# and also if you use the name of a Host from you ~/.ssh/config file.
+# and also if you use the name of a Host from your ~/.ssh/config file.
 
 # ***
 
@@ -302,9 +451,9 @@ my_merge_status_config () {
 
   # *** Workflow 'names' and any name-specific icons.
 
-  # Progenitor branches, e.g., check HEAD against 'develop' if feature
-  # branch, 'develop' against 'master', and 'master' has no progenitor.
-  GITSMART_MYST_BRANCH_HIERARCHY="${GITSMART_MYST_BRANCH_HIERARCHY:-master develop}"
+  # Progenitor branches, e.g., check HEAD against 'proving' if feature
+  # branch, 'proving' against 'release', and 'release' has no progenitor.
+  GITSMART_MYST_BRANCH_HIERARCHY="${GITSMART_MYST_BRANCH_HIERARCHY:-release proving}"
 
   # - Each remote has three parts (so the array size is a multiple of 3):
   #   The first part is the remote name, followed by the icon used when the
@@ -315,7 +464,7 @@ my_merge_status_config () {
   #     with community, i.e., the community that uses and works from the main
   #     source repository; and I guess the lighting bolt means you need to send
   #     a shock -- your bits! -- upstream to the organization repo.
-  GITSMART_MYST_REMOTE_HIERARCHY="${GITSMART_MYST_REMOTE_HIERARCHY:-origin 👍 👆 upstream 🌟 ⚡}"
+  GITSMART_MYST_REMOTE_HIERARCHY="${GITSMART_MYST_REMOTE_HIERARCHY:-proving 👍 👆 release 🌟 ⚡}"
 
   # *** Other icons and config.
 
@@ -341,7 +490,7 @@ my_merge_status_config () {
     GITSMART_MYST_WIP_REMINDER="$(fg_tan)$(attr_emphasis)† WIP"
   # File with paths of repos whose up-branch tidiness to ignore,
   # e.g., if you checked out a release branch, say, 'release-1.0',
-  # tell MYST to not worry about relationship to 'develop' branch.
+  # tell MYST to not worry about relationship to 'proving' branch.
   GITSMART_MYST_NOCHORES_FILE="${GITSMART_MYST_NOCHORES_FILE:-.my-merge-status-nochores}"
 
   GITSMART_MYST_TIP_BRANCH_REGEX="${GITSMART_MYST_TIP_BRANCH_REGEX:-^tip/}"
@@ -499,10 +648,10 @@ git_remotes_all_private () {
 
 # ***
 
-# A "tipped" branch, or "tip" branch is the branch of a forked repo
-# whose local changes have not made it upstream (yet) -- so you have
-# to pull upstream changes and rebase local modifications on top, and
-# thereby your local branch will *always* be ahead of upstream/master.
+# A "tipped" branch, or "tip" branch is the branch of a forked repo whose
+# local changes have not made it upstream (yet) -- so you have to pull
+# upstream changes and rebase local modifications on top, and thereby
+# your local branch will *always* be ahead of refs/remotes/release/release.
 branch_tipped () {
   local branch="$1"
   local tip_regex
@@ -544,10 +693,13 @@ branch_ancestor () {
   echo "${up_branch}"
 }
 
-# Ignore those repos that you do not control or for which you're
-# deliberate tracking a branch that is meant to be divergent from
-# the local upstream branch (e.g., you've pinned a repo to release
-# branch and do not care that it's not synced with, say, 'master').
+# You can ignore chores for a branch in a repository that you do not
+# control (e.g., you've cloned someone else's project, and the "proving"
+# branch is not synced to the "release" branch, but you cannot control
+# this); and you can ignore chores for a branch that you specifically
+# indicate is meant to be divergent from the progenitor branch (e.g.,
+# you've pinned a branch to a specific commit and so therefore the
+# branch is not expected to be merged into, say, "release").
 no_up_branch_chores () {
   local project_root="$(git rev-parse --show-toplevel)"
   local exclude_file="$(command -v "${GITSMART_MYST_NOCHORES_FILE}")"
@@ -566,8 +718,8 @@ warn_up_not_ancestor () {
   local up_branch="$1"
   [ -z "${up_branch}" ] && return
 
-  # Only warn if a conventional branch, i.e., not a feature or WIP
-  # branch, or something private where we don't care if user rebases.
+  # Only warn if a conventional branch, i.e., not a feature or WIP branch,
+  # or something private where we don't care if user will rebase.
   local it_matters=false
   local at_branch="${GITSMART_MYST_AT_BRANCH}"
   local it_branch
@@ -765,7 +917,7 @@ prepare_icon_synced_inner_self () {
   local at_branch="${GITSMART_MYST_AT_BRANCH}"
   local up_branch="${GITSMART_MYST_UP_BRANCH}"
   local sync_icon=" ${GITSMART_MYST_LOCAL_REPO_AGREE} "
-  # Whatever branch this is (including 'master', i.e., even branch with no
+  # Whatever branch this is (including 'release', i.e., even branch with no
   # ancestor), always show alert icon if the active branch is not pristine.
   # Or, if there's a local upstream branch, show alert icon if the current
   # branch is ahead of that upstream local; unless current branch is tipped,
@@ -779,8 +931,8 @@ prepare_icon_synced_inner_self () {
         # The user made a rule to ignore local branch work for this project.
         sync_icon=" ${GITSMART_MYST_LOCAL_REPO_NOCHR} "
       elif branch_tipped "${at_branch}"; then
-        # A "tip" branch has commits rebased on top of master, but the commits
-        # are not expected to be merged by the user to local upstream branch.
+        # A "tip" branch has commits rebased on top of "release", but the commits
+        # are not expected to be merged by the user to the local progenitor branch.
         sync_icon=" ${GITSMART_MYST_LOCAL_REPO_TIPBR} "
       else
         # E.g., sync_icon=' 👊 ', but with, e.g., bordered red background.
@@ -869,27 +1021,28 @@ prepare_icon_synced_remote () {
     2> /dev/null
   then
     # If this is not the first remote we've checked (i.e., diffco is not HEAD,
-    # so this is not the 'origin' remote, but the 'upstream' remote instead);
+    # so this is not the 'proving' remote, but the 'release' remote instead);
     # and if branch is tipped, e.g., 'tip/2020-03-09-abcd1234'; then not expecting
     # user to push to that remote; and showing a special icon instead.
     # 2020-03-23: Rather than check previous not 'HEAD' to infer this remote
-    # is not the first remote, e.g., 'origin', check the first remote directly,
-    # e.g., not:
+    # is not the first remote, e.g., 'proving' remote, check the first remote
+    # directly, e.g., not:
     #   if [ "${diffco}" != "HEAD" ] && branch_tipped "${at_branch}"; then
-    # but the following instead (which works when, say, there is no 'origin',
-    # and ${diffco} is still 'HEAD' for multiple calls to this function):
+    # but the following instead (which works when, say, there is no 'proving'
+    # remote, and ${diffco} is still 'HEAD' for multiple calls to this function):
     if [ "${remote}" != "${GITSMART_MYST_REMOTE_HIERARCHY[0]}" ] \
        && branch_tipped "${at_branch}"; \
     then
       # Local branch is tipped, e.g., tip/2020-03-09-abcd1234, and the
-      # 'upstream' remote branch does not exist, or it's not up to date.
+      # 'release' remote branch does not exist, or it's not up to date.
       if ${remote_branch_absent}; then
-        # Preferable: this tipped branch may have been pushed to (e.g., my) 'origin',
-        # but it has not been pushed to upstream (i.e., some organization's) 'upstream'.
+        # Preferable: this tipped branch may have been pushed to (e.g., my) 'proving'
+        # remote, but it has not been pushed to (e.g., main project) 'release' remote.
         sync_icon=" ${GITSMART_MYST_TIP_UPSTREAM_ABSENT} "
       else
-        # The branch exists in a secondary or lesser remote (per GITSMART_MYST_REMOTE_HIERARCHY
-        # order), e.g., branch is 'upstream'; and it's behind the local branch.
+        # The branch exists further upstream than the user's main remote (per
+        # GITSMART_MYST_REMOTE_HIERARCHY order), e.g., the remote is 'release';
+        # and the branch on that remote is behind the local branch.
         # - (lb): This is not part of my workflow, so showing different, but not doing
         # anything else; this use case is unlikely/not expected given how I work(flow).
         sync_icon=" ${GITSMART_MYST_TIP_UPSTREAM_EXISTS} "
@@ -988,7 +1141,7 @@ prepare_icons_branches () {
 prepare_icons_rebasing () {
   # Echoes one icon for every WIP or SQ commit between branch and upbranch.
 
-  # If no up-branch (i.e., on 'master'), do nothing.
+  # If no up-branch (i.e., on 'release' branch), do nothing.
   local up_branch="${GITSMART_MYST_UP_BRANCH}"
   [ -z "${up_branch}" ] && return
 
