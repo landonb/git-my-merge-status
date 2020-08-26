@@ -811,19 +811,19 @@ git_last_version_tag_icon () {
   commit_tags="$(git --no-pager tag --points-at HEAD)"
   if [ -z "${commit_tags}" ]; then
     # The latest version tag is on an older commit (than HEAD).
-    echo -n "${GITSMART_MYST_SINCE_VERSION_TAG} "
+    /usr/bin/env echo -n "${GITSMART_MYST_SINCE_VERSION_TAG} "
   else
     local version_tags
     version_tags="$(echo "${commit_tags}" | grep -e "${GITSMART_RE_VERSION_TAG}")"
     if [ "$(echo "${version_tags}" | wc -l)" -eq 0 ]; then
       # Latest commit tagged, but not with a recognizable version string.
-      echo -n "${GITSMART_MYST_SINCE_VERSION_TAG} "
+      /usr/bin/env echo -n "${GITSMART_MYST_SINCE_VERSION_TAG} "
     elif [ "$(echo "${version_tags}" | wc -l)" -ne 1 ]; then
       # More than 1 version tag found on latest commit!
-      echo -n "$(bg_red)${GITSMART_MYST_SINCE_VERSION_TAG}+$(attr_reset)"
+      /usr/bin/env echo -n "$(bg_red)${GITSMART_MYST_SINCE_VERSION_TAG}+$(attr_reset)"
     else
       # Perfect! The latest commit is versioned!
-      echo -n "$(bg_jade)${GITSMART_MYST_SINCE_VERSION_TAG} $(attr_reset)"
+      /usr/bin/env echo -n "$(bg_jade)${GITSMART_MYST_SINCE_VERSION_TAG} $(attr_reset)"
     fi
   fi
 }
@@ -1013,9 +1013,9 @@ prepare_icon_synced_inner_self () {
 fill_placeholder () {
   local n_times=${1:-1}
   # Note:
-  #     $ echo -n 🏷 | wc --chars
+  #     $ /usr/bin/env echo -n 🏷 | wc --chars
   #     1
-  #     $ echo -n 🏷 | wc --bytes
+  #     $ /usr/bin/env echo -n 🏷 | wc --bytes
   #     4
   #     # And same for 👍 and other Unicode characters.
   # But number of bytes is not the same as how many screen
