@@ -786,7 +786,9 @@ warn_up_not_ancestor () {
 
   if ! git show-branch ${up_branch} &> /dev/null; then
     >&2 echo -e "$(bg_red)WARNING: Oh gee! No progenitor at ${up_branch}!$(attr_reset)"
-  elif ! git merge-base --is-ancestor ${up_branch} HEAD 2> /dev/null; then
+  # NOTE: Use refs/heads/ prefix to avoid "warning: refname '{}' is ambiguous",
+  #       e.g., on macOS when remote is named same as branch.
+  elif ! git merge-base --is-ancestor refs/heads/${up_branch} HEAD 2> /dev/null; then
     # This could mean user rebased past ${up_branch}'s HEAD, which
     # would mean needing to writing an upstream branch's history to
     # commit changes. Which would probably be bad.
@@ -982,7 +984,9 @@ prepare_icon_synced_inner_self () {
     sync_icon="$(icon_alert "${GITSMART_MYST_LOCAL_REPO_MESSY}")"
     let "syncodes |= CHORE_UNTIDY"
   elif [ -n "${up_branch}" ]; then
-    if ! git merge-base --is-ancestor HEAD ${up_branch}; then
+    # NOTE: Use refs/heads/ prefix to avoid "warning: refname '{}' is ambiguous",
+    #       e.g., on macOS when remote is named same as branch.
+    if ! git merge-base --is-ancestor HEAD refs/heads/${up_branch}; then
       if no_up_branch_chores; then
         # The user made a rule to ignore local branch work for this project.
         sync_icon=" ${GITSMART_MYST_LOCAL_REPO_NOCHR} "
@@ -996,7 +1000,7 @@ prepare_icon_synced_inner_self () {
         let "syncodes |= CHORE_MERGE_UP_LOCAL"
       fi
       warn_up_not_ancestor "${up_branch}"
-    elif ! git merge-base --is-ancestor ${up_branch} HEAD; then
+    elif ! git merge-base --is-ancestor refs/heads/${up_branch} HEAD; then
       # Local branch is tidy; there exists a progenitor branch;
       # and the progenitor branch is ahead of this branch.
       # - Defaults to sailboat, ⛵, i.e., remote branch has sailed away.
@@ -1222,9 +1226,20 @@ prepare_icons_rebasing () {
   # and we'd otherwise have to check empty string and return 0, or add 1 if not empty.
   #
   #   >&2 echo "git --no-pager log --pretty=tformat:\"%H\" ${greps} ${up_branch}..HEAD"
+  #
+  # 2020-09-01: (lb): On macOS (Git 2.28.0), in projects with remotes named same
+  # as branch, e.g., remote 'release' and branch 'release', I see warnings, e.g.,
+  #    $ git --no-pager log --pretty=tformat:\"%H\" ${greps} ${up_branch}..HEAD
+  #    warning: refname 'release' is ambiguous
+  # although it's not happening to same repos on Linux machines (Git 2.27.0).
+  # You can see the refs, which match between machines.
+  #    $ git show-ref
+  #    abcd1234 refs/heads/release
+  #    abcd1234 refs/remotes/release/release
+  # which we can resolve with the more formal path, prefixed "refs/heads/".
   local wip_cnt
   wip_cnt=$( \
-    eval "git --no-pager log --pretty=tformat:\"%H\" ${greps} ${up_branch}..HEAD" \
+    eval "git --no-pager log --pretty=tformat:\"%H\" ${greps} refs/heads/${up_branch}..HEAD" \
     | wc -l \
   )
 
