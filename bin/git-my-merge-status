@@ -464,7 +464,8 @@ my_merge_status_config () {
   #     with community, i.e., the community that uses and works from the main
   #     source repository; and I guess the lighting bolt means you need to send
   #     a shock -- your bits! -- upstream to the organization repo.
-  GITSMART_MYST_REMOTE_HIERARCHY="${GITSMART_MYST_REMOTE_HIERARCHY:-proving 👍 👆 release 🌟 ⚡}"
+  # - 2020-09-21 22:54: No go on '🐾', red on red.
+  GITSMART_MYST_REMOTE_HIERARCHY="${GITSMART_MYST_REMOTE_HIERARCHY:-proving 👍 👆 release 🌟 ⚡ protected ✨ 🙋}"
 
   # *** Other icons and config.
 
