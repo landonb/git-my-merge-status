@@ -788,7 +788,7 @@ warn_up_not_ancestor () {
     >&2 echo -e "$(bg_red)WARNING: Oh gee! No progenitor at ${up_branch}!$(attr_reset)"
   # NOTE: Use refs/heads/ prefix to avoid "warning: refname '{}' is ambiguous",
   #       e.g., on macOS when remote is named same as branch.
-  elif ! git merge-base --is-ancestor refs/heads/${up_branch} HEAD 2> /dev/null; then
+  elif ! git merge-base --is-ancestor ${up_branch} HEAD 2> /dev/null; then
     # This could mean user rebased past ${up_branch}'s HEAD, which
     # would mean needing to writing an upstream branch's history to
     # commit changes. Which would probably be bad.
@@ -999,7 +999,7 @@ prepare_icon_synced_inner_self () {
         sync_icon="$(icon_alert "${GITSMART_MYST_LOCAL_REPO_AHEAD}")"
         let "syncodes |= CHORE_MERGE_UP_LOCAL"
       fi
-      warn_up_not_ancestor "${up_branch}"
+      warn_up_not_ancestor "refs/heads/${up_branch}"
     elif ! git merge-base --is-ancestor refs/heads/${up_branch} HEAD; then
       # Local branch is tidy; there exists a progenitor branch;
       # and the progenitor branch is ahead of this branch.
