@@ -620,8 +620,8 @@ source_deps () {
   #                                                                 |
   # *** stop boilerplate> ------------------------------------------|
 
-  # Load git_* functions.
-  # https://github.com/landonb/sh-git-nubs
+  # Load git_* funcs (e.g., git_branch_name), GITSMART_RE_GREPFILTER, etc.
+  #  https://github.com/landonb/sh-git-nubs
   _source_it "${prefix}" "../deps/sh-git-nubs/bin" "git-nubs.sh"
 
   # *** <more boilerplate: -----------------------------------------|
@@ -1135,6 +1135,7 @@ prepare_icon_synced_remote () {
 
 # ***
 
+# Uses GITSMART_MYST_REMOTE_HIERARCHY, passed in as args.
 prepare_icons_remotes () {
   local syncodes=0
 
