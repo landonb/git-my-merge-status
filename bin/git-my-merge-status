@@ -535,8 +535,28 @@ my_merge_status_config () {
   # i.e., to fit a YYYY-MM-DD string.
   GITSMART_MYST_BR_PART_TERMINATING_W=${GITSMART_MYST_BR_PART_TERMINATING_W:-10}
 
-  # aka GITSMART_MYST_TOO_COMFY but that name makes printfs really longer.
-  [ -z ${TOO_COMFY+x} ] && ${GITSMART_MYST_ALIGN_COLS} && TOO_COMFY=' ' || TOO_COMFY=''
+  # - Use GITSMART_MYST_COMFY_ENABLE to enable this feature, and
+  #   use GITSMART_MYST_COMFY_SPACER to set the default spacer
+  #   (so then either `export GITSMART_MYST_COMFY_ENABLE=false`
+  #        as well as `export GITSMART_MYST_COMFY_SPACER=''`
+  #    will disable the feature).
+  # - NOTE: (lb) I only like the extra TOO_COMFY spacing on macOS, not linux,
+  #   so only enabling this feature for macOS by default (it might just be my
+  #   machines, and though I've got the same font and font size used in the
+  #   terminals on @macOS as I do on @linux, and I use the same physical monitor,
+  #   the @macOS terminal text appears less roomy in general, so I like the extra
+  #   spacing on @macOS. In mate-terminal, though, not so much).
+  GITSMART_MYST_COMFY_ENABLE=${GITSMART_MYST_COMFY_ENABLE:-$(os_is_macos && echo true || echo false)}
+  # Set TOO_COMFY (shorter variable name so printfs below don't wrap too much),
+  # but only if the feature is enabled, and only for the longer listing (when
+  # aligning columns), and default to GITSMART_MYST_COMFY_SPACER if user set.
+  if ${GITSMART_MYST_COMFY_ENABLE} && ${GITSMART_MYST_ALIGN_COLS}; then
+    [ -z ${GITSMART_MYST_COMFY_SPACER+x} ] && \
+        TOO_COMFY=' ' \
+        || TOO_COMFY="${GITSMART_MYST_COMFY_SPACER}"
+  else
+    TOO_COMFY=''
+  fi
 }
 
 # ***
