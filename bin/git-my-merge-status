@@ -791,14 +791,14 @@ warn_up_not_ancestor () {
   ! ${it_matters} && return
 
   if ! git show-branch ${up_branch} &> /dev/null; then
-    >&2 echo -e "$(bg_red)WARNING: Oh gee! No progenitor at ${up_branch}!$(attr_reset)"
+    >&2 printf '%b\n' "$(bg_red)WARNING: Oh gee! No progenitor at ${up_branch}!$(attr_reset)"
   # NOTE: Use refs/heads/ prefix to avoid "warning: refname '{}' is ambiguous",
   #       e.g., on macOS when remote is named same as branch.
   elif ! git merge-base --is-ancestor ${up_branch} HEAD 2> /dev/null; then
     # This could mean user rebased past ${up_branch}'s HEAD, which
     # would mean needing to writing an upstream branch's history to
     # commit changes. Which would probably be bad.
-    >&2 echo -e "$(bg_red)WARNING: Whoops! History unrelated to ${up_branch}!$(attr_reset)"
+    >&2 printf '%b\n' "$(bg_red)WARNING: Whoops! History unrelated to ${up_branch}!$(attr_reset)"
   fi
 }
 
@@ -892,7 +892,7 @@ git_last_version_age () {
   scaled_tm="$(eval "printf '%-${minwidth_fancy}s' '${scaled_tm}'")"
   local pretty_tm="$(fg_lightgray)$(attr_emphasis)${scaled_tm}$(attr_reset)"
   # The smiley face ☻ eats a space, so the 3 spaces here looks like 2 to users.
-  echo -e "   ${vtag_icon} ${pretty_tm}"
+  printf '%b\n' "   ${vtag_icon} ${pretty_tm}"
 }
 
 # ***
@@ -926,7 +926,7 @@ prepare_text_on_branch () {
     fi
   fi
   local on_branch="$(fg_lightblue)${name}$(attr_reset)"
-  echo -e "${on_branch}"
+  printf '%b\n' "${on_branch}"
 }
 
 # ***
@@ -937,14 +937,14 @@ prepare_icon_public_remotes () {
   # E.g., privy_icon=" 🚽"
   git_remotes_all_private && \
     privy_icon=" ${GITSMART_MYST_ALL_REMOTES_PRIVY}"
-  echo -e "${privy_icon}"
+  printf '%b\n' "${privy_icon}"
 }
 
 # ***
 
 icon_alert () {
   _icon_alert () {
-    echo -e "$(_alert_prefix)$(_alert_interior "${1}")$(_alert_suffix)"
+    printf '%b\n' "$(_alert_prefix)$(_alert_interior "${1}")$(_alert_suffix)"
   }
 
   _alert_prefix () {
@@ -956,11 +956,11 @@ icon_alert () {
   }
 
   _alert_exterior () {
-    echo -e "$(fg_red)${1}$(attr_reset)"
+    printf '%b\n' "$(fg_red)${1}$(attr_reset)"
   }
 
   _alert_interior () {
-    echo -e "$(bg_red)${1}$(attr_reset)"
+    printf '%b\n' "$(bg_red)${1}$(attr_reset)"
   }
 
   _icon_alert "${@}"
@@ -1014,7 +1014,7 @@ prepare_icon_synced_inner_self () {
       let "syncodes |= CHORE_PULL_DOWN_LOCAL"
     fi
   fi
-  echo -e "${sync_icon}"
+  printf '%b\n' "${sync_icon}"
   return ${syncodes}
 }
 
@@ -1034,7 +1034,7 @@ fill_placeholder () {
   #                                                        1234
   #                                                        vvvv
   br_icons="$(eval "printf '${GITSMART_MYST_SEPARATE_REMOTES}    %.0s' {1..${n_times}}")"
-  echo -e "${br_icons}"
+  printf '%b\n' "${br_icons}"
 }
 
 # ***
@@ -1047,9 +1047,9 @@ fill_placeholder () {
 remote_wip_icon () {
   local remote_branch_absent="$1"
   if ${remote_branch_absent}; then
-    echo -e " ${GITSMART_MYST_WIP_REMOTE_ABSENT} "
+    printf '%b\n' " ${GITSMART_MYST_WIP_REMOTE_ABSENT} "
   else
-    echo -e " ${GITSMART_MYST_WIP_REMOTE_EXISTS} "
+    printf '%b\n' " ${GITSMART_MYST_WIP_REMOTE_EXISTS} "
   fi
 }
 
@@ -1130,7 +1130,7 @@ prepare_icon_synced_remote () {
     let "syncodes |= CHORE_PULL_DOWN_REMOTE"
   fi
 
-  echo -e "${sync_icon}"
+  printf '%b\n' "${sync_icon}"
   return ${syncodes}
 }
 
@@ -1182,7 +1182,7 @@ prepare_icons_remotes () {
     fi
   done
 
-  echo -e "${re_icons}"
+  printf '%b\n' "${re_icons}"
 
   return ${syncodes}
 }
@@ -1199,7 +1199,7 @@ prepare_icons_branches () {
   br_icons="${br_icons}$(prepare_icons_remotes "${@}")"
   let "syncodes |= $?"
 
-  echo -e "${br_icons}"
+  printf '%b\n' "${br_icons}"
   return ${syncodes}
 }
 
@@ -1325,7 +1325,8 @@ prepare_icon_meritorious () {
     commendation="${commendation}${pt_sqwipes}"
   commendation="${commendation} ${pt_badge}"
 
-  echo -e "${commendation}"
+  # Preceeds the trips dot-dot-dot ∙∙∙
+  printf '%b\n' "${commendation}"
 }
 
 # ***
@@ -1337,7 +1338,7 @@ prepare_extra_wip_reminder () {
   local reminder="${GITSMART_MYST_WIP_REMINDER}"
   ${GITSMART_MYST_ALIGN_COLS} && \
     reminder=" ${reminder}:${pt_sqwipes}$(attr_reset)"
-  echo -e "${reminder}$(attr_reset)"
+  printf '%b\n' "${reminder}$(attr_reset)"
 }
 
 # ***
@@ -1371,7 +1372,7 @@ prepare_branch_report () {
   local pt_vrage="$(git_last_version_age)"
   local pt_rewip="$(prepare_extra_wip_reminder "${wip_cnt}" "${pt_sqwipes}")"
 
-  echo -e "${pt_local}${pt_privy} ${GITSMART_MYST_SEP} ${pt_merge}${pt_merit}${pt_vrage}${pt_rewip}"
+  printf '%b\n' "${pt_local}${pt_privy} ${GITSMART_MYST_SEP} ${pt_merge}${pt_merit}${pt_vrage}${pt_rewip}"
 }
 
 # ***
