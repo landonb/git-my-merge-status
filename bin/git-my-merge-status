@@ -698,6 +698,16 @@ fg_tan () {
   printf "\033[38;2;215;175;95m"
 }
 
+# For icon_party.
+
+bg_party () {
+  printf "\033[48;2;210;12;210m"
+}
+
+fg_party () {
+  printf "\033[38;2;210;12;210m"
+}
+
 # ***
 
 git_remote_looks_private () {
@@ -826,19 +836,30 @@ git_last_version_tag_icon () {
   commit_tags="$(git --no-pager tag --points-at HEAD)"
   if [ -z "${commit_tags}" ]; then
     # The latest version tag is on an older commit (than HEAD).
-    /usr/bin/env echo -n "${GITSMART_MYST_SINCE_VERSION_TAG} "
+    # Note that GITSMART_MYST_SINCE_VERSION_TAG (🏷) is two characters wide,
+    # but in the console (at least @macOS iTerm2.app, and @linux mate-terminal)
+    # it's only given one character width. As such, the first character that
+    # follows the 🏷 will overlap it. Also, it affects lining up the column
+    # with the other character used in it, ☆ (GITSMART_MYST_SINCE_INIT_COMMIT).
+    # So we follow 🏷 with two spaces and lead with only 1, but for ☆ we lead
+    # with two spaces and follow w/ 1, thereby right-aligning the two glyphs.
+    printf " ${GITSMART_MYST_SINCE_VERSION_TAG}   "
   else
     local version_tags
     version_tags="$(echo "${commit_tags}" | grep -e "${GITSMART_RE_VERSION_TAG}")"
     if [ "$(echo "${version_tags}" | wc -l)" -eq 0 ]; then
       # Latest commit tagged, but not with a recognizable version string.
-      /usr/bin/env echo -n "${GITSMART_MYST_SINCE_VERSION_TAG} "
+      printf " ${GITSMART_MYST_SINCE_VERSION_TAG}   "
     elif [ "$(echo "${version_tags}" | wc -l)" -ne 1 ]; then
       # More than 1 version tag found on latest commit!
-      /usr/bin/env echo -n "$(bg_red)${GITSMART_MYST_SINCE_VERSION_TAG}+$(attr_reset)"
+      # Note: No space between glyphs. On both @linux and @macOS, the + overlaps
+      #  the tag emoji on the rightside, looks kinda interesting.
+      # MAYBE/2021-01-27: This might be Hack font-specific!
+      # - TESTME: Try git-my-merge-status with other fonts.
+      icon_alert "${GITSMART_MYST_SINCE_VERSION_TAG}➕"
     else
       # Perfect! The latest commit is versioned!
-      /usr/bin/env echo -n "$(bg_jade)${GITSMART_MYST_SINCE_VERSION_TAG} $(attr_reset)"
+      icon_party "${GITSMART_MYST_SINCE_VERSION_TAG} ♪"
     fi
   fi
 }
@@ -883,7 +904,15 @@ git_last_version_age () {
   # but we can do better! Show the age of the repository!
   if [ $? -ne 0 ]; then
     tagtime=$(git_since_init_epoch_ts)
-    vtag_icon="${GITSMART_MYST_SINCE_INIT_COMMIT} "
+    # Note the two leading spaces, because 1 character wide symbol (☆ vs 🏷),
+    # and we want them to right-align.
+    # - MAYBE/2021-01-26: Can/Should the code do the character width math?
+    #   - If the user changes the environs, it could easily break formatting.
+    #   - Currently, the code assumes:
+    #       termwidth(GITSMART_MYST_SINCE_VERSION_TAG) == 2
+    #       termwidth(GITSMART_MYST_SINCE_INIT_COMMIT) == 1
+    #   - See: fill_placeholder, | wc --bytes, etc.
+    vtag_icon="  ${GITSMART_MYST_SINCE_INIT_COMMIT}  "
   fi
   # No need to check $? again. #nofail
   # Determine the time elapsed between the tag (or init commit) and now.
@@ -899,7 +928,7 @@ git_last_version_age () {
   scaled_tm="$(eval "printf '%-${minwidth_fancy}s' '${scaled_tm}'")"
   local pretty_tm="$(fg_lightgray)$(attr_emphasis)${scaled_tm}$(attr_reset)"
   # The smiley face ☻ eats a space, so the 3 spaces here looks like 2 to users.
-  printf '%b\n' "   ${vtag_icon} ${pretty_tm}"
+  printf '%b\n' " ${vtag_icon}${pretty_tm}"
 }
 
 # ***
@@ -971,6 +1000,33 @@ icon_alert () {
   }
 
   _icon_alert "${@}"
+}
+
+icon_party () {
+  _icon_party () {
+    printf '%b\n' "$(_alert_prefix)$(_alert_interior "${1}")$(_alert_suffix)"
+  }
+
+  _alert_prefix () {
+    _alert_exterior '▐'  # Vim's 'RB' digraph.
+  }
+
+  _alert_suffix () {
+    # Using full block helpful for icons that don't add width to line,
+    # so that right side highlight gets clipped by the emoji character.
+    # Which is to say, a hack for @macOS.
+    _alert_exterior '█'  # Vim's 'FB' digraph.
+  }
+
+  _alert_exterior () {
+    printf '%b\n' "$(fg_party)${1}$(attr_reset)"
+  }
+
+  _alert_interior () {
+    printf '%b\n' "$(bg_party)${1}$(attr_reset)"
+  }
+
+  _icon_party "${@}"
 }
 
 # ***
