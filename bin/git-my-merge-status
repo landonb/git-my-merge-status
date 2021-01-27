@@ -900,7 +900,7 @@ git_last_version_age () {
 prepare_part () {
   local part="$1"
   local width="$2"
-  echo "$(eval "printf '%-${width}s' '${part:0:${width}}'")"
+  eval "printf '%-${width}s\n' '${part:0:${width}}'"
 }
 
 prepare_text_on_branch () {
