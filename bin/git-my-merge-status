@@ -534,6 +534,9 @@ my_merge_status_config () {
   # The width of the final branch name (path) part is 10 characters,
   # i.e., to fit a YYYY-MM-DD string.
   GITSMART_MYST_BR_PART_TERMINATING_W=${GITSMART_MYST_BR_PART_TERMINATING_W:-10}
+
+  # aka GITSMART_MYST_TOO_COMFY but that name makes printfs really longer.
+  ${GITSMART_MYST_ALIGN_COLS} && TOO_COMFY=' ' || TOO_COMFY=''
 }
 
 # ***
@@ -928,7 +931,7 @@ git_last_version_age () {
   scaled_tm="$(eval "printf '%-${minwidth_fancy}s' '${scaled_tm}'")"
   local pretty_tm="$(fg_lightgray)$(attr_emphasis)${scaled_tm}$(attr_reset)"
   # The smiley face ☻ eats a space, so the 3 spaces here looks like 2 to users.
-  printf '%b\n' " ${vtag_icon}${pretty_tm}"
+  printf '%b\n' " ${vtag_icon}${TOO_COMFY}${pretty_tm}"
 }
 
 # ***
@@ -1237,7 +1240,7 @@ prepare_icons_remotes () {
       re_icon=''
     fi
     if [ -n "${re_icon}" ]; then
-      re_icons="${re_icons}${GITSMART_MYST_SEPARATE_REMOTES}${re_icon}"
+      re_icons="${TOO_COMFY}${re_icons}${GITSMART_MYST_SEPARATE_REMOTES}${re_icon}"
     fi
     # Only change diffco (previous reference branch) if it exists.
     if git_remote_branch_exists "${remote}" "${currbr}"; then
@@ -1347,7 +1350,7 @@ prepare_icon_meritorious () {
     # E.g., icon="🛡", or "🌈", or whatever is set,
     # followed by a green face ☻ to indicate green.
     pt_badge="${GITSMART_MYST_ICON_ACHIEVEMENT}"
-    pt_badge="${pt_badge}$(fg_lightgreen)${GITSMART_MYST_ICON_TEMPERATURE}"
+    pt_badge="${pt_badge}${TOO_COMFY}${TOO_COMFY}$(fg_lightgreen)${GITSMART_MYST_ICON_TEMPERATURE}"
   else
     # For multiple-repo reporting, show spaces instead of rainbow shield.
     local no_badge="${GITSMART_MYST_ALIGN_NO_MERIT_FILLER}"
@@ -1375,9 +1378,9 @@ prepare_icon_meritorious () {
       # Light blue: Easy chores: `merge --ff-only` and `push` work, should be easy.
       tempcolor="$(fg_lightblue)"
     fi
-    pt_badge="${no_badge}${tempcolor}${GITSMART_MYST_ICON_TEMPERATURE}"
+    pt_badge="${no_badge}${TOO_COMFY}${TOO_COMFY}${tempcolor}${GITSMART_MYST_ICON_TEMPERATURE}"
   fi
-  pt_badge="${pt_badge}$(attr_reset)"
+  pt_badge="${TOO_COMFY}${pt_badge}$(attr_reset)"
 
   local tripsep="${GITSMART_MYST_TRIPLE_SEP}"
 
@@ -1436,7 +1439,7 @@ prepare_branch_report () {
   local pt_vrage="$(git_last_version_age)"
   local pt_rewip="$(prepare_extra_wip_reminder "${wip_cnt}" "${pt_sqwipes}")"
 
-  printf '%b\n' "${pt_local}${pt_privy} ${GITSMART_MYST_SEP} ${pt_merge}${pt_merit}${pt_vrage}${pt_rewip}"
+  printf '%b\n' "${pt_local}${TOO_COMFY}${TOO_COMFY}${pt_privy} ${TOO_COMFY}${TOO_COMFY}${GITSMART_MYST_SEP}${TOO_COMFY} ${pt_merge}${pt_merit}${pt_vrage}${pt_rewip}"
 }
 
 # ***
