@@ -451,9 +451,10 @@ my_merge_status_config () {
 
   # *** Workflow 'names' and any name-specific icons.
 
-  # Progenitor branches, e.g., check HEAD against 'proving' if feature
-  # branch, 'proving' against 'release', and 'release' has no progenitor.
-  GITSMART_MYST_BRANCH_HIERARCHY="${GITSMART_MYST_BRANCH_HIERARCHY:-release proving}"
+  # Progenitor branches, e.g., check HEAD against 'develop' if feature branch,
+  # 'develop' against 'release', and 'release' has no progenitor. (The author
+  # also uses 'proving' for some projects.)
+  GITSMART_MYST_BRANCH_HIERARCHY="${GITSMART_MYST_BRANCH_HIERARCHY:-release develop proving}"
 
   # - Each remote has three parts (so the array size is a multiple of 3):
   #   The first part is the remote name, followed by the icon used when the
