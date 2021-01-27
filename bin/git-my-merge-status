@@ -536,7 +536,7 @@ my_merge_status_config () {
   GITSMART_MYST_BR_PART_TERMINATING_W=${GITSMART_MYST_BR_PART_TERMINATING_W:-10}
 
   # aka GITSMART_MYST_TOO_COMFY but that name makes printfs really longer.
-  ${GITSMART_MYST_ALIGN_COLS} && TOO_COMFY=' ' || TOO_COMFY=''
+  [ -z ${TOO_COMFY+x} ] && ${GITSMART_MYST_ALIGN_COLS} && TOO_COMFY=' ' || TOO_COMFY=''
 }
 
 # ***
