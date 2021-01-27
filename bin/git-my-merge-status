@@ -452,9 +452,8 @@ my_merge_status_config () {
   # *** Workflow 'names' and any name-specific icons.
 
   # Progenitor branches, e.g., check HEAD against 'develop' if feature branch,
-  # 'develop' against 'release', and 'release' has no progenitor. (The author
-  # also uses 'proving' for some projects.)
-  GITSMART_MYST_BRANCH_HIERARCHY="${GITSMART_MYST_BRANCH_HIERARCHY:-release develop proving}"
+  # 'develop' against 'release', and 'release' has no progenitor.
+  GITSMART_MYST_BRANCH_HIERARCHY="${GITSMART_MYST_BRANCH_HIERARCHY:-release develop}"
 
   # - Each remote has three parts (so the array size is a multiple of 3):
   #   The first part is the remote name, followed by the icon used when the
@@ -465,8 +464,12 @@ my_merge_status_config () {
   #     with community, i.e., the community that uses and works from the main
   #     source repository; and I guess the lighting bolt means you need to send
   #     a shock -- your bits! -- upstream to the organization repo.
-  # - 2020-09-21 22:54: No go on '🐾', red on red.
-  GITSMART_MYST_REMOTE_HIERARCHY="${GITSMART_MYST_REMOTE_HIERARCHY:-proving 👍 👆 release 🌟 ⚡ protected ✨ 🙋}"
+  # - 2020-09-21: No go on '🐾', red on red.
+  # - 2021-01-26: Ha, on macOS, paw prints are grey, which looks good.
+  #   Hrmmm, we could detect OS to choose best defaults; or we could
+  #   try to pick characters that look good on all OSes!
+  #   Also, this might be font specific -- I use Hack font!
+  GITSMART_MYST_REMOTE_HIERARCHY="${GITSMART_MYST_REMOTE_HIERARCHY:-release 👍 👆 protected 🌟 🌛}"
 
   # *** Other icons and config.
 
