@@ -1377,7 +1377,7 @@ prepare_branch_report () {
 
 # ***
 
-echo_branch_report () {
+print_branch_report () {
   # Set default args, unless user passed.
   [ "${#}" -eq 0 ] && \
     set -- ${GITSMART_MYST_REMOTE_HIERARCHY}
@@ -1387,7 +1387,7 @@ echo_branch_report () {
 # ***
 
 my_merge_status_report () {
-  echo_branch_report "${@}"
+  print_branch_report "${@}"
   git status --short
 }
 
