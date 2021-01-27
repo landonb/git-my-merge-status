@@ -1347,8 +1347,9 @@ prepare_branch_report () {
   GITSMART_MYST_AT_BRANCH="$(git_branch_name)"
 
   GITSMART_MYST_UP_BRANCH="$(branch_ancestor "${GITSMART_MYST_AT_BRANCH}")"
-  while [ -n "${GITSMART_MYST_UP_BRANCH}" ] \
-        && ! git_branch_exists "${GITSMART_MYST_UP_BRANCH}" \
+  while true \
+    && [ -n "${GITSMART_MYST_UP_BRANCH}" ] \
+    && ! git_branch_exists "${GITSMART_MYST_UP_BRANCH}" \
   ; do
     GITSMART_MYST_UP_BRANCH="$(branch_ancestor "${GITSMART_MYST_UP_BRANCH}")"
   done
