@@ -663,7 +663,9 @@ bg_jade () {
 }
 
 bg_red () {
-  printf "\033[41m"
+  # On @macOS, built-in red is pinkish, and bg red != fg red.
+  #   printf "\033[41m"
+  printf "\033[48;2;255;0;0m"
 }
 
 fg_green () {
@@ -687,7 +689,9 @@ fg_lightyellow () {
 }
 
 fg_red () {
-  printf "\033[91m"
+  # On @macOS, built-in red is pinkish, and bg red != fg red.
+  #   printf "\033[91m"
+  printf "\033[38;2;255;0;0m"
 }
 
 fg_tan () {
