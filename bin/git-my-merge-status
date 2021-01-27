@@ -653,6 +653,12 @@ python_get_distribution () {
 
 # ***
 
+os_is_macos () {
+  [ "$(uname)" == "Darwin" ]
+}
+
+# ***
+
 attr_emphasis () {
   printf "\e[3m"
 }
@@ -846,7 +852,17 @@ git_last_version_tag_icon () {
     # with the other character used in it, ☆ (GITSMART_MYST_SINCE_INIT_COMMIT).
     # So we follow 🏷 with two spaces and lead with only 1, but for ☆ we lead
     # with two spaces and follow w/ 1, thereby right-aligning the two glyphs.
-    printf " ${GITSMART_MYST_SINCE_VERSION_TAG}   "
+    # MEH/2021-01-27: (lb): I'm not super green on this business logic that
+    # takes into account the glyph that GITSMART_MYST_SINCE_VERSION_TAG uses,
+    # and that distinguishes between macOS vs. linux. (This could get messy!)
+    if ! os_is_macos; then
+      # Hack font on linux prints tag emoji (🏷) more centered/normally.
+      printf "  ${GITSMART_MYST_SINCE_VERSION_TAG}  "
+    else
+      # The tag emoji (🏷) on @macOS is larger than @linux, and right-
+      # justifies, or otherwise just looks better formatted thusly:
+      printf " ${GITSMART_MYST_SINCE_VERSION_TAG}   "
+    fi
   else
     local version_tags
     version_tags="$(echo "${commit_tags}" | grep -e "${GITSMART_RE_VERSION_TAG}")"
