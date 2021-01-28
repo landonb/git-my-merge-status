@@ -674,7 +674,7 @@ python_get_distribution () {
 # ***
 
 os_is_macos () {
-  [ "$(uname)" == "Darwin" ]
+  [ "$(uname)" = "Darwin" ]
 }
 
 # ***
