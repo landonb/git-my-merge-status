@@ -516,10 +516,44 @@ my_merge_status_config () {
   GITSMART_MYST_HIDE_AGE=${GITSMART_MYST_HIDE_AGE:-false}
   ! python_get_distribution "human-friendly_pedantic-timedelta" &> /dev/null && \
     GITSMART_MYST_HIDE_AGE=true
-  # SYNC_ME: If you edit GITSMART_MYST_SINCE_VERSION_TAG, see `minwidth_fancy`, below.
-  GITSMART_MYST_SINCE_VERSION_TAG="${GITSMART_MYST_SINCE_VERSION_TAG:-🏷}"
+  #
+  # SYNC_ME: If you edit GITSMART_MYST_SINCE_LATEST_VERSION_TAG, see `minwidth_fancy`, below.
+  GITSMART_MYST_SINCE_LATEST_VERSION_TAG="${GITSMART_MYST_SINCE_LATEST_VERSION_TAG:-🏷}"
   # Pneumonic: A ☆ is born! The branch age, since the first commit.
-  GITSMART_MYST_SINCE_INIT_COMMIT="${GITSMART_MYST_SINCE_INIT_COMMIT:-☆}"
+  GITSMART_MYST_SINCE_GIT_INIT_COMMIT="${GITSMART_MYST_SINCE_GIT_INIT_COMMIT:-☆}"
+  # 2021-01-31: New feature: Show latest commit time delta by default; tag delta now optional.
+  # - MAYBE/2021-01-31: I encoded whitespace in this icon variable to account for display
+  #   width, e.g., the 🌜 uses two display widths, but ⏭ uses justs one, so that business
+  #   logic should be in the overrideable environment variable and not encoded in the code
+  #   below.
+  #   - But for most of the other icon variables in this file, the display width is assumed
+  #     (so that if the user uses a 2-width icon where 1 is assumed, or vice versa, it could
+  #     throw off the pretty formatted width).
+  #     - So the MAYBE ask here is to maybe encode spacing into the other icon variables.
+  #       - See also `minwidth_fancy`, should probably maybe make that configurable.
+  # - 2021-01-31: I demoed a dozen icons but it's not easy to find an icon that both
+  #   indicates what the time delta following it means, and an icon that doesn't appear
+  #   to have its own meaning (that is, all icons used in my-merge-status except this
+  #   one mean something on their own; this is the only icon that indicates context for
+  #   another display item (the time delta); and my concern is that users might not get
+  #   the connection that this icon is describing the time delta value that follows it).
+  #   - In any case, the moon shows the 'last quarter', i.e., last commit... get it?
+  #   GITSMART_MYST_SINCE_MOST_RECENT_COMMIT="${GITSMART_MYST_SINCE_MOST_RECENT_COMMIT:-🌜}"
+  #   - Or better yet, perhaps the 'next track button' (though not 'fast-forward', ⏩,
+  #     which is too colorful and distracting, i.e., it visually looks more important
+  #     than the time delta). On Linux, too, the next track icon is somewhat subdued,
+  #     and not colorful, so it's easier to perceive it being attached to the time delta
+  #     following it. It also shows arrows going rightward into a vertical line, like,
+  #     "this project has progressed to this point" (which is not a bad mnemonic).
+  #   GITSMART_MYST_SINCE_MOST_RECENT_COMMIT="${GITSMART_MYST_SINCE_MOST_RECENT_COMMIT:-⏭ }"
+  #   - I also like the chocolate bar, looks nice and has the (stretch) mnemonic:
+  #       Most recent -> Latest -> chocoLATEst ??
+  #   GITSMART_MYST_SINCE_MOST_RECENT_COMMIT="${GITSMART_MYST_SINCE_MOST_RECENT_COMMIT:-🍫}"
+  # 2021-01-31: Choosing the next track icon as the default for the aforementioned reasons.
+  GITSMART_MYST_SINCE_MOST_RECENT_COMMIT="${GITSMART_MYST_SINCE_MOST_RECENT_COMMIT:-⏭ }"
+  # Set this flag true to show time since latest version tag in timedelta column (or time
+  # since git-init, if not versioned). Otherwise defaults to time since most recent commit.
+  GITSMART_MYST_SHOW_SINCE_LAST_VERSIONED=${GITSMART_MYST_SHOW_SINCE_LAST_VERSIONED:-false}
 
   # landonb/ohmyrepos alignment (set true when running git-my-merge-status
   # against 100s of repos, so that columns align nicely).
@@ -860,45 +894,45 @@ python_prettify_elapsed () {
      2> /dev/null
 }
 
-git_last_version_tag_icon () {
+git_since_latest_version_tag_icon () {
   local commit_tags
   commit_tags="$(git --no-pager tag --points-at HEAD)"
   if [ -z "${commit_tags}" ]; then
     # The latest version tag is on an older commit (than HEAD).
-    # Note that GITSMART_MYST_SINCE_VERSION_TAG (🏷) is two characters wide,
+    # Note that GITSMART_MYST_SINCE_LATEST_VERSION_TAG (🏷) is two characters wide,
     # but in the console (at least @macOS iTerm2.app, and @linux mate-terminal)
     # it's only given one character width. As such, the first character that
     # follows the 🏷 will overlap it. Also, it affects lining up the column
-    # with the other character used in it, ☆ (GITSMART_MYST_SINCE_INIT_COMMIT).
+    # with the other character used in it, ☆ (GITSMART_MYST_SINCE_GIT_INIT_COMMIT).
     # So we follow 🏷 with two spaces and lead with only 1, but for ☆ we lead
     # with two spaces and follow w/ 1, thereby right-aligning the two glyphs.
     # MEH/2021-01-27: (lb): I'm not super green on this business logic that
-    # takes into account the glyph that GITSMART_MYST_SINCE_VERSION_TAG uses,
+    # takes into account the glyph that GITSMART_MYST_SINCE_LATEST_VERSION_TAG uses,
     # and that distinguishes between macOS vs. linux. (This could get messy!)
     if ! os_is_macos; then
       # Hack font on linux prints tag emoji (🏷) more centered/normally.
-      printf "  ${GITSMART_MYST_SINCE_VERSION_TAG}  "
+      printf "  ${GITSMART_MYST_SINCE_LATEST_VERSION_TAG}  "
     else
       # The tag emoji (🏷) on @macOS is larger than @linux, and right-
       # justifies, or otherwise just looks better formatted thusly:
-      printf " ${GITSMART_MYST_SINCE_VERSION_TAG}   "
+      printf " ${GITSMART_MYST_SINCE_LATEST_VERSION_TAG}   "
     fi
   else
     local version_tags
     version_tags="$(echo "${commit_tags}" | grep -e "${GITSMART_RE_VERSION_TAG}")"
     if [ "$(echo "${version_tags}" | wc -l)" -eq 0 ]; then
       # Latest commit tagged, but not with a recognizable version string.
-      printf " ${GITSMART_MYST_SINCE_VERSION_TAG}   "
+      printf " ${GITSMART_MYST_SINCE_LATEST_VERSION_TAG}   "
     elif [ "$(echo "${version_tags}" | wc -l)" -ne 1 ]; then
       # More than 1 version tag found on latest commit!
       # Note: No space between glyphs. On both @linux and @macOS, the + overlaps
       #  the tag emoji on the rightside, looks kinda interesting.
       # MAYBE/2021-01-27: This might be Hack font-specific!
       # - TESTME: Try git-my-merge-status with other fonts.
-      icon_alert "${GITSMART_MYST_SINCE_VERSION_TAG}➕"
+      icon_alert "${GITSMART_MYST_SINCE_LATEST_VERSION_TAG}➕"
     else
       # Perfect! The latest commit is versioned!
-      icon_party "${GITSMART_MYST_SINCE_VERSION_TAG} ♪"
+      icon_party "${GITSMART_MYST_SINCE_LATEST_VERSION_TAG} ♪"
     fi
   fi
 }
@@ -909,7 +943,7 @@ git_last_version_age () {
   # - The hardcoded width here accounts for the leading 2 spaces in the final
   #   echo of this function, 1 space for the tag emoji (which, CAVEAT, means
   #   this feature easily breaks (the columns won't necessarily align) if the
-  #   user edits GITSMART_MYST_SINCE_VERSION_TAG!), 2 more spaces, and `XX.X mons.`
+  #   user edits GITSMART_MYST_SINCE_LATEST_VERSION_TAG!), 2 more spaces, and `XX.X mons.`
   #   is the longest date string (10 chars) we'd see, plus there's 1 space after
   #   → 2+1+2+10+1=16.
   local minwidth_plain=16
@@ -928,7 +962,7 @@ git_last_version_age () {
       echo "  "
     fi
   }
-  local vtag_icon="$(git_last_version_tag_icon)"
+  local vtag_icon
   # - If tagged, enforce minwidth on tag string: we'll set the width on just
   #   the time portion, so ignore 5 characters from the previous calculation
   #   (the first 2 spaces, the '🏷', and the next 2 spaces)
@@ -936,22 +970,29 @@ git_last_version_age () {
   local minwidth_fancy=11
   # Get the epoch when the repo was last tagged.
   local tagtime
-  tagtime=$(git_last_version_epoch_ts)
+  if ! ${GITSMART_MYST_SHOW_SINCE_LAST_VERSIONED:-false}; then
+    vtag_icon="  ${GITSMART_MYST_SINCE_MOST_RECENT_COMMIT} "
+    tagtime=$(git_since_most_recent_commit_epoch_ts)
+  fi
+  if [ $? -ne 0 ] || ${GITSMART_MYST_SHOW_SINCE_LAST_VERSIONED:-false}; then
+    vtag_icon="$(git_since_latest_version_tag_icon)"
+    tagtime=$(git_since_latest_version_tag_epoch_ts)
+  fi
   # If not tagged, original code filled w/ spaces, so final "WIP" cells
   # aligned in their column, e.g.,
   #   [ $? -ne 0 ] && _print_filler && return 0
   # but we can do better! Show the age of the repository!
   if [ $? -ne 0 ]; then
-    tagtime=$(git_since_init_epoch_ts)
     # Note the two leading spaces, because 1 character wide symbol (☆ vs 🏷),
     # and we want them to right-align.
     # - MAYBE/2021-01-26: Can/Should the code do the character width math?
     #   - If the user changes the environs, it could easily break formatting.
     #   - Currently, the code assumes:
-    #       termwidth(GITSMART_MYST_SINCE_VERSION_TAG) == 2
-    #       termwidth(GITSMART_MYST_SINCE_INIT_COMMIT) == 1
+    #       termwidth(GITSMART_MYST_SINCE_LATEST_VERSION_TAG) == 2
+    #       termwidth(GITSMART_MYST_SINCE_GIT_INIT_COMMIT) == 1
     #   - See: fill_placeholder, | wc --bytes, etc.
-    vtag_icon="  ${GITSMART_MYST_SINCE_INIT_COMMIT}  "
+    vtag_icon="  ${GITSMART_MYST_SINCE_GIT_INIT_COMMIT}  "
+    tagtime=$(git_since_git_init_commit_epoch_ts)
   fi
   # No need to check $? again. #nofail
   # Determine the time elapsed between the tag (or init commit) and now.
