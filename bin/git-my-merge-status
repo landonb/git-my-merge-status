@@ -1215,11 +1215,36 @@ prepare_icon_synced_remote () {
   local sync_icon=" ${iconok} "
   local remote_branch_absent=false
 
+  local remote_br="${at_branch}"
+
   # Check that the branch exists on the remote.
   # Note that we don't want to make a network call, so avoiding, e.g.,
-  #   git show-ref --verify --quiet refs/remotes/${remote}/${at_branch}
+  #   git show-ref --verify --quiet refs/remotes/${remote}/${remote_br}
   # and well as `git ls-remote`.
-  if ! git_remote_branch_exists "${remote}" "${at_branch}"; then
+  local remote_branch_exists=true
+
+  if ! git_remote_branch_exists "${remote}" "${remote_br}"; then
+    remote_branch_exists=false
+
+    # See if the branch is tracking a differently-named branch.
+    # - (lb): I normally don't do this, but sometimes I do, e.g.,
+    #   I might `git co -b develop release/master`.
+    local up_branch="$(git rev-parse --abbrev-ref ${remote_br}@{upstream})"
+
+    if [ -n "${up_branch}" ]; then
+      # Note that if you `git co -b foo` from a local branch, the tracking
+      # branch will be that local branch, so we check that the tracking
+      # branch starts with the remote name, e.g., 'release/foo'.
+      local tracking_br="$(echo "${up_branch}" | sed "s#^${remote}/##")"
+
+      if [ "${tracking_br}" != "${up_branch}" ]; then
+        remote_br="${tracking_br}"
+        remote_branch_exists=true
+      fi
+    fi
+  fi
+
+  if ! ${remote_branch_exists}; then
     # Default to placeholder "icon" (blank spaces).
     sync_icon="$(fill_placeholder "1")"
     remote_branch_absent=true
@@ -1233,7 +1258,7 @@ prepare_icon_synced_remote () {
   # (branch) exists, e.g., if the branch has not been pushed to the remote.
   # On the other hand, this call is successful if the two branches are at the
   # same commit, or if the latter is ahead of the former.
-  ! git merge-base --is-ancestor ${diffco} refs/remotes/${remote}/${at_branch} \
+  ! git merge-base --is-ancestor ${diffco} refs/remotes/${remote}/${remote_br} \
     2> /dev/null
   then
     # If this is not the first remote we've checked (i.e., diffco is not HEAD,
@@ -1271,9 +1296,9 @@ prepare_icon_synced_remote () {
       # changes, user might have to force-push to the remote branch, egad!).
       sync_icon="$(icon_alert "${iconxx}")"
       let "syncodes |= CHORE_PUSH_UP_REMOTE"
-      warn_up_not_ancestor "remotes/${remote}/${at_branch}"
+      warn_up_not_ancestor "remotes/${remote}/${remote_br}"
     fi
-  elif ! git merge-base --is-ancestor refs/remotes/${remote}/${at_branch} ${diffco} \
+  elif ! git merge-base --is-ancestor refs/remotes/${remote}/${remote_br} ${diffco} \
   2> /dev/null; then
     # The remote/branch is ahead of this remote/branch. ⛵ Come Sail Away.
     sync_icon=" ${GITSMART_MYST_PROGENITOR_AHEAD} "
