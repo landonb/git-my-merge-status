@@ -681,7 +681,7 @@ source_deps () {
   #                                                                 |
   # *** stop boilerplate> ------------------------------------------|
 
-  # Load git_* funcs (e.g., git_branch_name), GITSMART_RE_GREPFILTER, etc.
+  # Load git_* funcs (e.g., git_branch_name), vars (GITSMART_RE_VERSPARTS), etc.
   #  https://github.com/landonb/sh-git-nubs
   _source_it "${prefix}" "../deps/sh-git-nubs/bin" "git-nubs.sh"
 
@@ -923,7 +923,7 @@ git_since_latest_version_tag_icon () {
     fi
   else
     local version_tags
-    version_tags="$(echo "${commit_tags}" | grep -e "${GITSMART_RE_VERSION_TAG}")"
+    version_tags="$(echo "${commit_tags}" | grep -e "${GITSMART_RE_VERSPARTS}")"
     if [ "$(echo "${version_tags}" | wc -l)" -eq 0 ]; then
       # Latest commit tagged, but not with a recognizable version string.
       printf " ${GITSMART_MYST_SINCE_LATEST_VERSION_TAG}   "
