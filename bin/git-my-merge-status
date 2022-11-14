@@ -1178,7 +1178,7 @@ prepare_icon_synced_remote () {
     # See if the branch is tracking a differently-named branch.
     # - (lb): I normally don't do this, but sometimes I do, e.g.,
     #   I might `git co -b develop release/master`.
-    local up_branch="$(git rev-parse --abbrev-ref ${remote_br}@{upstream})"
+    local up_branch="$(git rev-parse --abbrev-ref ${remote_br}@{upstream} 2> /dev/null)"
 
     if [ -n "${up_branch}" ]; then
       # Note that if you `git co -b foo` from a local branch, the tracking
