@@ -44,6 +44,10 @@ git_branch_name () {
   printf %s "${branch_name}"
 }
 
+git_branch_name_full () {
+  git rev-parse --symbolic-full-name HEAD
+}
+
 git_HEAD_commit_sha () {
   git rev-parse HEAD
 }
@@ -88,7 +92,7 @@ git_remote_branch_exists () {
     remote_branch="${remote}/${branch}"
   fi
 
-  git show-branch "remotes/${remote_branch}" &> /dev/null
+  git show-branch "refs/remotes/${remote_branch}" &> /dev/null
 }
 
 # Prints the tracking aka upstream branch.
@@ -103,10 +107,18 @@ git_tracking_branch_safe () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-# Not that Git essentially calls `realpath` (or `readlink -f`?)
-# on the path, resolving symlinks along the way.
+# Note that Git resolves symlinks, e.g., what cd'ing to project root
+# and running `realpath .`, `readlink -f .`, or `pwd -P` would show.
 git_project_root () {
+  # Same output as `git root`.
   git rev-parse --show-toplevel
+}
+
+# Print empty string if at project root;
+# print '../'-concatenated path to project root;
+# or git prints to stderr if not a Git project.
+git_parent_path_to_project_root () {
+  git root -r | sed "s#\([^/]\+\)#..#g"
 }
 
 # Check that the current directory exists in a Git repo.
