@@ -1282,9 +1282,8 @@ prepare_icons_remotes () {
       exit 1
     fi
 
-    # Oddly, if you `shift n` more than there are args, nothing gets shifted.
-    # To ensure `while` exits if args is not a multiple of 3, shift individually.
-    # - Not safe: `shift 3`.
+    # If you `shift n` more than there are args, nothing gets shifted.
+    # - So we checked previously to unsure there were 3 arguments.
     shift 3
 
     local re_icon
