@@ -428,8 +428,9 @@
 #   that was forked.
 # - If you've cloned a project from another user or organization without
 #   forking it first, the remote is named 'origin' by default. But I'll
-#   often `git clone -o release` instead, so that the remote is called
-#   'release', and so I'm reminded that the code is not my own.
+#   often `git clone -o starter` instead, so that all third-party projects
+#   use the same, unique remote name (whether 'starter' or whatever). I
+#   use this trick as another clue to remind myself whose code is whose.
 # - You can name any other remotes as you see fit, e.g., if you are working
 #   with another user and need access to their branches, you might add a
 #   remote named with the same name as that user.
