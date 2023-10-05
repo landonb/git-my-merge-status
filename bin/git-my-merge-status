@@ -273,29 +273,49 @@
 # Here are the default icons and their significance,
 #  where [symbol] means it's an alert, shown in red:
 #
+# First part:
+# -  {}  the branch name
+#
+# Second part:
 # -  🚽  a "private" repository, i.e., there's no remote with .com|.org|.etc.
 #    🎁  a public repository, i.e., there's at least one .com|.org|.etc remote.
+#
+# Third part:
+# -  ∙   a delimiter
+#
+# Fourth part:
 # - [👇] active branch is not tidy: has working tree changes, or untracked files.
 #   [👊] active branch needs work: ahead of local ancestor, or has WIP or squash! commits;
 #    🙏  active branch is pristine: at same commit as ancestor, and no WIP/squash commits.
 #    🍬  active branch is a TIP branch, deliberately ahead of progenitor branch and 'release' remote.
 #    🙈  chores are ignored per rule in GITSMART_MYST_NOCHORES_FILE (except tidiness).
+#
+# Fifth part:
 # - [👆] active branch not pushed your 'proving' remote -- not shown for WIP branches.
 #    👍  active branch at same commit as matching branch in 'proving' remote, e.g., refs/remotes/proving/<branch>.
 # - [⚡] active branch not pushed to 'release' remote -- not shown for WIP or TIP branches.
 #    🌩  active branch same commit as 'release' remote, e.g., refs/remotes/release/<branch>.
+#
+# Fifth part alternatives:
 # -  ⛵  remote branch is ahead of local branch; user may want to fetch/pull changes.
 #    🤷  for WIP branch, printed for each remote, because not expecting user to push.
 #    ❗  for WIP, printed if the branch exists on the remote, which is unexpected.
 #    🦘  for TIP branch, means there's no remote branch of same name (which is fine).
 #    ❓  for TIP branch, means the remote branch exists, which would be strange.
-# -  🏭  a WIP or "squash!" commit found between HEAD and the latest progenitor commit
+#
+# Sixth part:
+# - ∙∙∙  a delimiter
+#
+# Seventh part:
 # -  🌈  the all-good indicator: shown if active branch needs no work and is pushed.
 #   [☻]  shaded to indicate what chores to do:
 #        - Green: No chores. Working tree tidy, and progenitor and remote branches okay.
 #        - Blue: User should merge the branch to progenitor or push to remote.
 #        - Yellow: User needs to fetch changes from progenitor branch or remote.
 #        - Red: Local repo is untidy; user must commit changes, add untracked, etc.
+#
+# Eighth+ part(s):
+# -  🏭  a WIP or "squash!" commit found between HEAD and the latest progenitor commit
 # -  🏷  if version tag found, shows how old it is (release early, release often!).
 #    ☆   if no version tag, shows the age of the branch, since the first commit.
 
@@ -1153,8 +1173,8 @@ fill_placeholder () {
   # But number of bytes is not the same as how many screen
   # columns each Unicode character typically uses, which is 2.
   # MAGIC_NUMBER(_of_spaces): space + 2-char-unicode + space = 4
-  #                                                        1234
-  #                                                        vvvv
+  #                                                          1234
+  #                                                          vvvv
   br_icons="$(eval "printf '${GITSMART_MYST_SEPARATE_REMOTES}    %.0s' {1..${n_times}}")"
   printf '%b\n' "${br_icons}"
 }
@@ -1200,7 +1220,7 @@ prepare_icon_synced_remote () {
 
     # See if the branch is tracking a differently-named branch.
     # - (lb): I normally don't do this, but sometimes I do, e.g.,
-    #   I might `git co -b develop release/master`.
+    #   I might `git co -b develop starter/main`.
     local up_branch="$(git rev-parse --abbrev-ref ${remote_br}@{upstream} 2> /dev/null)"
 
     if [ -n "${up_branch}" ]; then
@@ -1384,7 +1404,7 @@ prepare_icons_rebasing () {
   # as branch, e.g., remote 'release' and branch 'release', I see warnings, e.g.,
   #    $ git --no-pager log --pretty=tformat:\"%H\" ${greps} ${up_branch}..HEAD
   #    warning: refname 'release' is ambiguous
-  # although it's not happening to same repos on Linux machines (Git 2.27.0).
+  # although it's not happening to same repos on Linux machines (on Git 2.27.0).
   # You can see the refs, which match between machines.
   #    $ git show-ref
   #    abcd1234 refs/heads/release
