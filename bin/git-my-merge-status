@@ -36,114 +36,115 @@
 
 # [HOLD ON, THIS'LL TAKE SOME EXPLAINING.]
 
-# BASIC IDEA:
+# OVERVIEW:
 #
-# Think of git-my-merge-status as `git status --porcelain` on steroids.
+#   git-my-merge-status is a concise, colorful, and iconic `git status` one-liner
 #
 # CONCEPTS:
 #
-# In addition to letting you know if there's work to do in the working
-# tree, such as if there are uncommitted files, my-merge-status also
-# indicates if there's *workflow*-related work to do, such as needing
-# to pull changes from a remote, or needing to merge a feature branch
-# into a main development branch, or needing to push changes to a remote.
+# - In addition to letting you know if there's work to do in the working
+#   tree, such as if there are uncommitted files, my-merge-status also
+#   indicates if there's *workflow*-related work to do, such as needing
+#   to pull changes from a remote, or needing to merge a feature branch
+#   into a main development branch, or needing to push changes to a remote.
 #
-# As such, we'll need to clarify what we call each branch and each remote,
-# and we'll need to define what purpose they each serve.
+#   As such, we'll need to clarify what we call each branch and each remote,
+#   and we'll need to define what purpose they each serve.
 #
 # REMOTE NAMES AND TERMS:
 #
-# - "RELEASE" REMOTE (the main project remote, sometimes called "upstream"):
+# - The 'publish' remote is your main, public-facing remote.
+#        -------
 #
-#   The `git clone` command uses "origin" as the default remote name,
-#   and users often clone their project fork first (without specifying
-#   an alternative name with the `-o` option) before adding another
-#   remote to point to the main project repository. So, generally, the
-#   "origin" remote points to the user's fork. Then, when the user adds
-#   a remote to the main project, they choose a different remote name,
-#   and oftentimes that name is "upstream" (or at least that's the name
-#   I often see used in examples online).
+#   Not all projects have a 'publish' remote. This is what you might
+#   think of as the 'origin' remote in the typical sense when you're
+#   cloning an open source project from GitHub and don't specify the
+#   remote name. In that `git clone` uses 'origin' as the default
+#   remote name.
 #
-#   But, in a general sense, "upstream" can mean any remote where you push
-#   changes. For instance, my GitHub repository (or any remote, for that
-#   matter) is "upstream" of the local working tree on my machine. The term
-#   might also be used to refer to a branch relationship, e.g., a "release"
-#   branch might be considered *upstream* of a "development" branch, because
-#   code flows *up* from the development branch into the release branch.
+#   When users fork a project, they'll likely want to use two remotes,
+#   one for their fork, and one for the upstream (main) project repo.
+#   Oddly, I've often seen people use (at least in examples online)
+#   the name 'upstream' for the main project remote, and to keep the
+#   default, 'origin', for their fork. This seems odd to me only
+#   because 'upstream' is ambiguous — both remotes are technically
+#   upstream, I'd reason. And branches can also be 'upstream' of
+#   one another. Also, 'origin' is ambiguous: Without checking URLs,
+#   you couldn't reason which remote is which, e.g., is 'origin' the
+#   user's fork, or is 'origin' the 'original' starter project?
 #
-#   However, unlike "origin", which Git uses by default when you clone but
-#   don't specify a remote name, the term "upstream" is not not codified
-#   anywhere; it's just part of the vernacular. It's what the community
-#   has come to name the remote that points to the main project repository.
+#   That's why I like to use 'publish' strictly for *your* remote,
+#   whether a fork of another project, or an original project you
+#   maintain.
 #
-#   As such, because "upstream" is used in different contexts and may have
-#   different meanings, to avoid confusion, we'll call the main project
-#   remote the "release" remote. This should ensure you have a clear idea
-#   what we're talking about -- the "release" remote is the main project
-#   repository.
+# - The 'starter' remote is the original remote for a fork.
+#        -------
 #
-# - "PROVING" REMOTE (your forked project remote, sometimes called "origin"):
+#   As mentioned above, in the name of disambiguation, we pick a
+#   unique, unsullied term to clearly identify which remote represents
+#   the original, forked-from remote. And that name is 'starter'.
+#   Which might seem weird. It is. They're all weird names. They're
+#   also trying to be unique and memorable. And seven-letters each,
+#   so they align nicely in columnar output (same with pre-defined,
+#   conventional branch names, discussed below).
 #
-#   Because Git defaults to using the name "origin" to label the remote
-#   when you run the `git clone` command, and because people often clone
-#   their own repository first (and then run `git remote add` to attach
-#   the main project remote), we could use the name "origin" to refer to
-#   the remote that the user owns and controls.
+#   Note that a 'starter' remote is always a third-party project.
+#   It's never your own project. You should use 'publish' for your
+#   own projects, and if you need to use a second personal remote,
+#   using the 'testing' remote, described next.
 #
-#   However, as with the "release" remote, to avoid ambiguity, we'll call
-#   the forked project remote the "proving" remote, as in, you're proving
-#   that your code works before you submit it to the release repository.
+# - The 'testing' remote is an optional proving grounds remote.
+#        -------
 #
-#   This way -- using two unique, precise terms, "proving" and "release" --
-#   there should be no confusion as to which remote refers to what. The
-#   "proving" remote refers to your fork, and the "release" remote refers
-#   to the main project.
+#   If you'd like to test changes without using a feature branch,
+#   maybe hiding them further away from the public, or testing them
+#   privately first, whatever your reasons, you might want to
+#   use a different remote to test changes before you publish
+#   them (to the 'publish' remote). That remote is called 'testing'.
 #
-# - CUSTOM/ALTERNATIVE REMOTE NAMES:
+# - The 'entrust' remote is used by git-put-wise.
+#        -------
 #
-#   If you'd like to use remote names other than those defined here, copy
+#   The git-put-wise commands can share changes privately between
+#   separate hosts using a shared Git host, often a private GitHub
+#   (or other) project. This remote is called 'entrust' (and, as
+#   discussed later, it has just one branch, 'entrust/scoping',
+#   which will be at or ahead of the 'publish/release' branch).
+#
+#     https://github.com/DepoXy/git-put-wise#🥨
+#
+# - Remember these names are customizable.
+#
+#   The point is to choose precise terms for each remote, so there
+#   is no confusion as to what each remote represents. Then when
+#   you run git-my-merge-status and are looking at the output,
+#   you have a clue what you're looking at.
+#
+# CUSTOM/ALTERNATIVE REMOTE NAMES:
+#
+# - If you'd like to use remote names other than those defined here, copy
 #   the environment variable found below, GITSMART_MYST_REMOTE_HIERARCHY,
 #   to a wrapper script that you call before you call this script, and
-#   insert your preferred names as appropriate (or just edit the variable
+#   insert your preferred names as appropriate (or just edit the variables
 #   below in your own copy of this script).
 #
-# - WHY "PROVING" and "RELEASE"?
+# WHY SEVEN LETTERS EACH?
 #
-#   The author finds the terms "origin" and "upstream" to be ambiguous,
-#   and despite their widespread use, there's no consensus on their use.
-#   So I find it safer to use more precise terms that are not commonly
-#   used, which avoids the risk of confusing some users.
-#
-#   I like to think of the main project remote as the "release" remote,
-#   and my GitHub user's fork of the project as the "proving" remote.
-#   The term "release" is pretty obvious -- whatever code you're working
-#   on is published from one source, and that's the "release". As for
-#   "proving", this could just as well be "testing" or "development",
-#   but by using "proving", we've chosen a word not normally used, so
-#   there will be less confusion about what it means. This is the remote
-#   where you prove that your code works, and after you've proven that,
-#   then you can submit it to the main project for release.
-#
-#   As a bonus, these two words have the same number of letters, and,
-#   when alphabetized, the main project remote is listed last, so a call
-#   to `git remote -v` will list them in the logical order of how the code
-#   flows (first to the "proving" remote, and then to the "release" remote);
-#   and as a bonus, because the two names are the same width, the output is
+# - When the two names are the same width, the output is
 #   more visually pleasant. E.g.,
 #
 #     $ git remote -v | grep push
-#     proving git@github.com:my-user/some-project.git (push)
-#     release git@github.com:the-org/some-project.git (push)
+#     publish git@github.com:my-user/some-project.git (push)
+#     starter git@github.com:the-org/some-project.git (push)
 #
-#   - (While it's being discussed, I may as well plug a better git-remote
-#      formatter -- see the `git re` command in my git-smart project:
+#   - CXREF: Shameless self-plug: A better git-remote formatter —
+#     - See `git re` from https://github.com/landonb/git-smart#💡:
 #
 #        https://github.com/landonb/git-smart/blob/release/bin/git-re
 #
-#      The `git re` command only lists each remote once (unlike git-remote);
-#      it orders the remotes based on the direction code flows (from remotes
-#      listed first to remotes listed later); and it right-aligns the remote
-#      names for prettier output.)
+#      - `git re` lists each remote only once (unlike `git remote -v`).
+#      - `git re` ensures consistent and proper ordering.
+#      - `git re` right-aligns the remote names for prettier output.
 #
 # BRANCH NAMES AND TERMS:
 #
@@ -242,12 +243,12 @@
 # branches for additional functionality I've found useful.
 #
 # Remotes:
-# - If you've forked or cloned someone else's project, assign that URL
-#   to the 'release' remote.
+# - If you've forked or cloned someone else's project, assign the
+#   original project URL to the 'starter' remote.
 # - If you've forked a project, or if it's your personal project,
-#   assign that URL to the 'proving' remote.
+#   assign that URL to the 'publish' remote.
 #   - If you didn't fork the project and it's not yours, do not use
-#     a remote named 'proving'.
+#     a remote named 'publish'.
 # - All other remotes are ignored.
 #
 # Branches:
@@ -287,14 +288,13 @@
 # - [👇] active branch is not tidy: has working tree changes, or untracked files.
 #   [👊] active branch needs work: ahead of local ancestor, or has WIP or squash! commits;
 #    🙏  active branch is pristine: at same commit as ancestor, and no WIP/squash commits.
-#    🍬  active branch is a TIP branch, deliberately ahead of progenitor branch and 'release' remote.
+#    🍬  active branch is a TIP branch, deliberately ahead of progenitor branch and 'publish' remote.
 #    🙈  chores are ignored per rule in GITSMART_MYST_NOCHORES_FILE (except tidiness).
 #
 # Fifth part:
 # - [👆] active branch not pushed your 'proving' remote -- not shown for WIP branches.
 #    👍  active branch at same commit as matching branch in 'proving' remote, e.g., refs/remotes/proving/<branch>.
-# - [⚡] active branch not pushed to 'release' remote -- not shown for WIP or TIP branches.
-#    🌩  active branch same commit as 'release' remote, e.g., refs/remotes/release/<branch>.
+# - [⚡] active branch not pushed to 'publish' remote -- not shown for WIP or TIP branches.
 #
 # Fifth part alternatives:
 # -  ⛵  remote branch is ahead of local branch; user may want to fetch/pull changes.
@@ -449,10 +449,10 @@
 #
 # REMOTE REPOSITORY CONVENTIONS:
 #
-# Considering the two conventional remote repositories, 'proving' and 'release':
+# Considering the two conventional remote repositories, 'publish' and 'starter':
 # - Neither remote exists for private repositories.
-# - If you've forked a project, the 'proving' remote refers to your GitHub
-#   user's repository, and the 'release' remote refers to the repository
+# - If you've forked a project, the 'publish' remote refers to your GitHub
+#   user's repository, and the 'starter' remote refers to the repository
 #   that was forked.
 # - If you've cloned a project from another user or organization without
 #   forking it first, the remote is named 'origin' by default. But I'll
@@ -462,7 +462,7 @@
 # - You can name any other remotes as you see fit, e.g., if you are working
 #   with another user and need access to their branches, you might add a
 #   remote named with the same name as that user.
-#   - my-merge-status only makes assumptions about the 'proving' and 'release'
+#   - my-merge-status only makes assumptions about the 'publish' and 'starter'
 #     remotes, and it ignores all other remotes.
 #
 # OTHER CONVENTIONS:
@@ -773,7 +773,7 @@ git_remotes_all_private () {
 # A "tipped" branch, or "tip" branch is the branch of a forked repo whose
 # local changes have not made it upstream (yet) -- so you have to pull
 # upstream changes and rebase local modifications on top, and thereby
-# your local branch will *always* be ahead of refs/remotes/release/release.
+# your local branch will *always* be ahead of refs/remotes/publish/release.
 branch_tipped () {
   local branch="$1"
   local tip_regex
@@ -1226,7 +1226,7 @@ prepare_icon_synced_remote () {
     if [ -n "${up_branch}" ]; then
       # Note that if you `git co -b foo` from a local branch, the tracking
       # branch will be that local branch, so we check that the tracking
-      # branch starts with the remote name, e.g., 'release/foo'.
+      # branch starts with the remote name, e.g., 'publish/foo'.
       local tracking_br="$(echo "${up_branch}" | sed "s#^${remote}/##")"
 
       if [ "${tracking_br}" != "${up_branch}" ]; then
@@ -1254,7 +1254,7 @@ prepare_icon_synced_remote () {
     2> /dev/null
   then
     # If this is not the first remote we've checked (i.e., diffco is not HEAD,
-    # so this is not the 'proving' remote, but the 'release' remote instead);
+    # so this is not the 'proving' remote, but the 'publish' remote instead);
     # and if branch is tipped, e.g., 'tip/2020-03-09-abcd1234'; then not expecting
     # user to push to that remote; and showing a special icon instead.
     # 2020-03-23: Rather than check previous not 'HEAD' to infer this remote
@@ -1267,14 +1267,14 @@ prepare_icon_synced_remote () {
        && branch_tipped "${at_branch}"; \
     then
       # Local branch is tipped, e.g., tip/2020-03-09-abcd1234, and the
-      # 'release' remote branch does not exist, or it's not up to date.
+      # 'publish' remote branch does not exist, or it's not up to date.
       if ${remote_branch_absent}; then
         # Preferable: this tipped branch may have been pushed to (e.g., my) 'proving'
-        # remote, but it has not been pushed to (e.g., main project) 'release' remote.
+        # remote, but it has not been pushed to (e.g., main project) 'publish' remote.
         sync_icon=" ${GITSMART_MYST_TIP_UPSTREAM_ABSENT} "
       else
         # The branch exists further upstream than the user's main remote (per
-        # GITSMART_MYST_REMOTE_HIERARCHY order), e.g., the remote is 'release';
+        # GITSMART_MYST_REMOTE_HIERARCHY order), e.g., the remote is 'publish';
         # and the branch on that remote is behind the local branch.
         # - (lb): This is not part of my workflow, so showing different, but not doing
         # anything else; this use case is unlikely/not expected given how I work(flow).
