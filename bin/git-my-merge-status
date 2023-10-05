@@ -5,7 +5,7 @@
 # Copyright © 2020 Landon Bouma. All rights reserved.
 # License: MIT. Please find more in the LICENSE file.
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # USAGE: Run directly, or put on PATH and wire as alias.
 #
@@ -17,9 +17,13 @@
 #
 #           $ alias st="git-my-merge-status"
 
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
 # YOU: Run as-is, or customize to you liking via environs,
 #      or by copy-pasting `my_merge_status_config`, below, to
 #      your own wrapper script.
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # DEPENDENCIES: None, but some optional.
 #
@@ -28,7 +32,7 @@
 #
 #     pip3 install human-friendly_pedantic-timedelta
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # [HOLD ON, THIS'LL TAKE SOME EXPLAINING.]
 
@@ -261,7 +265,9 @@
 #   this script (i.e., so you aren't needled to merge changes to 'proving',
 #   because you checked out a pinned branch), you can add rules to the
 #   ignore file (defined by GITSMART_MYST_NOCHORES_FILE).
-#
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
 # SYMBOLOGY:
 #
 # Here are the default icons and their significance,
@@ -292,7 +298,9 @@
 #        - Red: Local repo is untidy; user must commit changes, add untracked, etc.
 # -  🏷  if version tag found, shows how old it is (release early, release often!).
 #    ☆   if no version tag, shows the age of the branch, since the first commit.
-#
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
 # CONVENTIONS:
 #
 # TYPES OF BRANCHES (AND HOW THEY'RE NAMED):
@@ -444,7 +452,7 @@
 # which works for a default SSH URL, e.g., "git@github.com:landonb/git-my-merge-status",
 # and also if you use the name of a Host from your ~/.ssh/config file.
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # YOU: All customizable features are in this function.
 # - See README for copy-paste code to setup a wrapper script for your user.
@@ -594,8 +602,6 @@ my_merge_status_config () {
   fi
 }
 
-# ***
-
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # *** <beg boilerplate `source_deps`: ------------------------------|
@@ -646,8 +652,6 @@ source_deps () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-# ***
-
 python_get_distribution () {
   local pkgname="$1"
   /usr/bin/env python3 -c \
@@ -661,7 +665,7 @@ os_is_macos () {
   [ "$(uname)" = "Darwin" ]
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 attr_emphasis () {
   printf "\e[3m"
@@ -670,6 +674,8 @@ attr_emphasis () {
 attr_reset () {
   printf "\033[0m";
 }
+
+# ***
 
 bg_jade () {
   printf "\033[48;2;0;175;95m"
@@ -680,6 +686,8 @@ bg_red () {
   #   printf "\033[41m"
   printf "\033[48;2;255;0;0m"
 }
+
+# ***
 
 fg_green () {
   printf "\033[32m"
@@ -711,6 +719,8 @@ fg_tan () {
   printf "\033[38;2;215;175;95m"
 }
 
+# ***
+
 # For icon_party.
 
 bg_party () {
@@ -721,7 +731,7 @@ fg_party () {
   printf "\033[38;2;210;12;210m"
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 git_remote_looks_private () {
   local remote="$1"
@@ -738,7 +748,7 @@ git_remotes_all_private () {
   return 0
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # A "tipped" branch, or "tip" branch is the branch of a forked repo whose
 # local changes have not made it upstream (yet) -- so you have to pull
@@ -770,7 +780,7 @@ branch_is_local_alpha_or_wip () {
   return 1
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 branch_ancestor () {
   local at_branch="${1:-${GITSMART_MYST_AT_BRANCH}}"
@@ -784,6 +794,8 @@ branch_ancestor () {
   # make its way → ${up_branch}.
   echo "${up_branch}"
 }
+
+# ***
 
 # You can ignore chores for a branch in a repository that you do not
 # control (e.g., you've cloned someone else's project, and the "proving"
@@ -805,6 +817,8 @@ no_up_branch_chores () {
   done < "${exclude_file}"
   return 1
 }
+
+# ***
 
 warn_up_not_ancestor () {
   local up_branch="$1"
@@ -836,7 +850,7 @@ warn_up_not_ancestor () {
   fi
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 python_prettify_elapsed () {
   local seconds="${1:-0}"
@@ -847,6 +861,8 @@ python_prettify_elapsed () {
      print(pdtd.time_format_scaled(field_width=4, precision=1, abbreviate=4)[0]);" \
      2> /dev/null
 }
+
+# ***
 
 git_since_latest_version_tag_icon () {
   local commit_tags
@@ -890,6 +906,8 @@ git_since_latest_version_tag_icon () {
     fi
   fi
 }
+
+# ***
 
 git_last_version_age () {
   ${GITSMART_MYST_HIDE_AGE} && echo ' ' && return 0
@@ -965,13 +983,15 @@ git_last_version_age () {
   printf '%b\n' " ${vtag_icon}${TOO_COMFY}${pretty_tm}"
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 prepare_part () {
   local part="$1"
   local width="$2"
   eval "printf '%-${width}s\n' '${part:0:${width}}'"
 }
+
+# ***
 
 prepare_text_on_branch () {
   local name="${GITSMART_MYST_AT_BRANCH}"
@@ -1010,7 +1030,7 @@ prepare_icon_public_remotes () {
   printf '%b\n' "${privy_icon}"
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 icon_alert () {
   _icon_alert () {
@@ -1035,6 +1055,8 @@ icon_alert () {
 
   _icon_alert "${@}"
 }
+
+# ***
 
 icon_party () {
   _icon_party () {
@@ -1063,7 +1085,7 @@ icon_party () {
   _icon_party "${@}"
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 CHORE_UNTIDY=1
 CHORE_MERGE_UP_LOCAL=2
@@ -1118,7 +1140,7 @@ prepare_icon_synced_inner_self () {
   return ${syncodes}
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 fill_placeholder () {
   local n_times=${1:-1}
@@ -1137,7 +1159,7 @@ fill_placeholder () {
   printf '%b\n' "${br_icons}"
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # Indicate whether the branch is a WIP branch (local/private/alpha), meaning
 # we don't care if the user has not pushed the branch to the remote -- show,
@@ -1259,7 +1281,7 @@ prepare_icon_synced_remote () {
   return ${syncodes}
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 # Uses GITSMART_MYST_REMOTE_HIERARCHY, passed in as args.
 prepare_icons_remotes () {
@@ -1327,7 +1349,7 @@ prepare_icons_branches () {
   return ${syncodes}
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 prepare_icons_rebasing () {
   # Echoes one icon for every WIP or SQ commit between branch and upbranch.
@@ -1395,7 +1417,7 @@ prepare_icons_rebasing () {
   return ${wip_cnt}
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 prepare_icon_meritorious () {
   local syncodes="$1"
@@ -1453,7 +1475,7 @@ prepare_icon_meritorious () {
   printf '%b\n' "${commendation}"
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 prepare_extra_wip_reminder () {
   local wip_cnt="$1"
@@ -1465,7 +1487,7 @@ prepare_extra_wip_reminder () {
   printf '%b\n' "${reminder}$(attr_reset)"
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 prepare_branch_report () {
   GITSMART_MYST_AT_BRANCH="$(git_branch_name)"
@@ -1509,7 +1531,7 @@ print_branch_report () {
   prepare_branch_report "${@}"
 }
 
-# ***
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 my_merge_status_report () {
   print_branch_report "${@}"
