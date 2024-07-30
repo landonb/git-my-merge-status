@@ -1023,7 +1023,7 @@ prepare_text_on_branch () {
     # N.O.T.E: Very Much Bash-specific code. Not POSIX.
     declare -a bparts
     IFS='/' read -a bparts <<< "${name}"
-    if [ "${name}" != "${bparts[0]}" ] && [ ${#bparts} -ge 2 ]; then
+    if [ "${name}" != "${bparts[0]}" ] && [ ${#bparts[@]} -ge 2 ]; then
       local penultimate="$(prepare_part "${bparts[-2]}" ${GITSMART_MYST_BR_PART_PENULTIMATE_W})"
       local terminating="$(prepare_part "${bparts[-1]}" ${GITSMART_MYST_BR_PART_TERMINATING_W})"
       name="${penultimate}/${terminating}"
