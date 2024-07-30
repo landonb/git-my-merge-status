@@ -1033,10 +1033,13 @@ prepare_text_on_branch () {
         + GITSMART_MYST_BR_PART_PENULTIMATE_W \
         + GITSMART_MYST_BR_PART_TERMINATING_W \
         + 1))
+
       name="$(prepare_part "${name}" ${parts_and_sep_width})"
     fi
   fi
+
   local on_branch="$(fg_lightblue)${name}$(attr_reset)"
+
   printf '%b\n' "${on_branch}"
 }
 
