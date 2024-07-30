@@ -1023,9 +1023,21 @@ prepare_text_on_branch () {
     # N.O.T.E: Very Much Bash-specific code. Not POSIX.
     declare -a bparts
     IFS='/' read -a bparts <<< "${name}"
-    if [ "${name}" != "${bparts[0]}" ] && [ ${#bparts[@]} -ge 2 ]; then
-      local penultimate="$(prepare_part "${bparts[-2]}" ${GITSMART_MYST_BR_PART_PENULTIMATE_W})"
-      local terminating="$(prepare_part "${bparts[-1]}" ${GITSMART_MYST_BR_PART_TERMINATING_W})"
+
+    local n_parts=${#bparts[@]}
+
+    if [ "${name}" != "${bparts[0]}" ] && [ ${n_parts} -ge 2 ]; then
+      # Bash v3 (macOS) support: Avoid negative array indices.
+      # - E.g., instead of this:
+      #     i_penu="${bparts[-2]}"
+      #     i_term="${bparts[-1]}"
+      #   This:
+      local i_penu=$((${n_parts} - 2))
+      local i_term=$((${n_parts} - 1))
+
+      local penultimate="$(prepare_part "${bparts[${i_penu}]}" ${GITSMART_MYST_BR_PART_PENULTIMATE_W})"
+      local terminating="$(prepare_part "${bparts[${i_term}]}" ${GITSMART_MYST_BR_PART_TERMINATING_W})"
+
       name="${penultimate}/${terminating}"
     else
       # MAGIC_NUMBER: Add one for the '/' separator.
