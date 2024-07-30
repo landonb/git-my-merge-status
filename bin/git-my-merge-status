@@ -1005,6 +1005,7 @@ git_last_version_age () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+# INERT: Add wide-character support.
 prepare_part () {
   local part="$1"
   local width="$2"
