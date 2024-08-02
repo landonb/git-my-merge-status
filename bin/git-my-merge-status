@@ -1148,7 +1148,7 @@ prepare_icon_synced_inner_self () {
   # Or, if there's a local upstream branch, show alert icon if the current
   # branch is ahead of that upstream local; unless current branch is tipped,
   # then show a different icon but don't mean it as an alert, just as info.
-  if [ -n "$(git status --porcelain)" ]; then
+  if [ -n "$(git status --porcelain=v1)" ]; then
     sync_icon="$(icon_alert "${GITSMART_MYST_LOCAL_REPO_MESSY}")"
     let "syncodes |= CHORE_UNTIDY"
   elif [ -n "${up_branch}" ]; then
