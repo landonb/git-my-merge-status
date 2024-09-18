@@ -30,7 +30,7 @@
 # - If you'd like the output to show how old version tags are, install
 #   a Python package published by the same author who wrote this script:
 #
-#     pip3 install human-friendly_pedantic-timedelta
+#     python3 -m pip install human-friendly_pedantic-timedelta
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
