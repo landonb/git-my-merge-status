@@ -672,6 +672,21 @@ source_deps () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+python_pyenv_shell_prepare () {
+  if ! command -v pyenv > /dev/null; then
+
+    return 0
+  fi
+
+  eval "$(pyenv init -)"
+
+  # FIXME/2024-09-18: This is not very universal... figure out a better
+  # approach for pyenv users...
+  #
+  # USYNC: DEPOXY_PYENV_PYVERS
+  pyenv shell ${GITSMART_PYENV_PYVERS:-${DEPOXY_PYENV_PYVERS:-3.12.1}}
+}
+
 python_get_distribution () {
   local pkgname="$1"
   /usr/bin/env python3 -c \
@@ -1588,6 +1603,7 @@ main () {
   local before_cd="$(pwd -L)"
   # So that a git alias works, which run !commands from top-level, cd maybe.
   [ -n "${GIT_PREFIX}" ] && cd "${GIT_PREFIX}"
+  python_pyenv_shell_prepare
   my_merge_status_config
   my_merge_status_report "${@}"
   cd "${before_cd}"
