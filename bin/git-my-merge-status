@@ -675,8 +675,8 @@ source_deps () {
 python_get_distribution () {
   local pkgname="$1"
   /usr/bin/env python3 -c \
-    "from pkg_resources import get_distribution; \
-     print(get_distribution('${pkgname}').version);"
+    "from importlib.metadata import version; \
+     print(version('${pkgname}'));"
 }
 
 # ***
