@@ -1592,7 +1592,7 @@ print_branch_report () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 my_merge_status_report () {
-  print_branch_report "${@}"
+  print_branch_report "$@"
   git status --short
 }
 
@@ -1605,7 +1605,7 @@ main () {
   [ -n "${GIT_PREFIX}" ] && cd "${GIT_PREFIX}"
   python_pyenv_shell_prepare
   my_merge_status_config
-  my_merge_status_report "${@}"
+  my_merge_status_report "$@"
   cd "${before_cd}"
 }
 
