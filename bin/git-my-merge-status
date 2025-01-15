@@ -751,7 +751,7 @@ python_pyenv_shell_prepare () {
   # approach for pyenv users...
   #
   # USYNC: DEPOXY_PYENV_PYVERS
-  pyenv shell ${GITSMART_PYENV_PYVERS:-${DEPOXY_PYENV_PYVERS:-3.12.1}}
+  pyenv shell ${GITSMART_PYENV_PYVERS:-${DEPOXY_PYENV_PYVERS:-3.12.8}}
 }
 
 python_get_distribution () {
