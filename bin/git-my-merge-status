@@ -548,7 +548,7 @@ my_merge_status_config () {
   #
   # SYNC_ME: If you edit GITSMART_MYST_SINCE_LATEST_VERSION_TAG, see `minwidth_fancy`, below.
   GITSMART_MYST_SINCE_LATEST_VERSION_TAG="${GITSMART_MYST_SINCE_LATEST_VERSION_TAG:-🏷}"
-  # Pneumonic: A ☆ is born! The branch age, since the first commit.
+  # mnemonic: A ☆ is born! The branch age, since the first commit.
   GITSMART_MYST_SINCE_GIT_INIT_COMMIT="${GITSMART_MYST_SINCE_GIT_INIT_COMMIT:-☆}"
   # 2021-01-31: New feature: Show latest commit time delta by default; tag delta now optional.
   # - MAYBE/2021-01-31: I encoded whitespace in this icon variable to account for display
