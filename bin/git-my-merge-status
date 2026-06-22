@@ -1660,7 +1660,7 @@ print_branch_report () {
 
 my_merge_status_report () {
   print_branch_report "$@"
-  git status --short
+  git status --short ${GITSMART_MYST_GIT_STATUS_UNTRACKED:+-u}
 }
 
 # ***
